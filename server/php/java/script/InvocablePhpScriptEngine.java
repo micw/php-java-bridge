@@ -43,6 +43,7 @@ import javax.script.ScriptException;
 
 import php.java.bridge.PhpProcedure;
 import php.java.bridge.Util;
+import php.java.bridge.http.IContext;
 
 /**
  * This class implements the ScriptEngine and the Invocable interface.<p>
@@ -75,9 +76,7 @@ import php.java.bridge.Util;
  * </blockquote>
  */
 public class InvocablePhpScriptEngine extends AbstractPhpScriptEngine implements Invocable {
-    private static final String X_JAVABRIDGE_INCLUDE = "X_JAVABRIDGE_INCLUDE";
-    private static final String JAVA_BRIDGE = "/JavaBridge";
-    private static final String HTTP_127_0_0_1 = "http://127.0.0.1:";
+    private static final String X_JAVABRIDGE_INCLUDE = Util.X_JAVABRIDGE_INCLUDE;
     private static final String PHP_JAVA_CONTEXT_CALL_JAVA_CLOSURE = "<?php java_context()->call(java_closure()); ?>";
     protected static final Object EMPTY_INCLUDE = "@";
     private static boolean registeredHook = false;
@@ -172,7 +171,8 @@ public class InvocablePhpScriptEngine extends AbstractPhpScriptEngine implements
     protected Reader getLocalReader(Reader reader) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Writer w = new OutputStreamWriter(out);
-        Reader localReader = new StringReader(PhpScriptEngine.getStandardHeader(HTTP_127_0_0_1+ctx.getSocketName()+JAVA_BRIDGE));
+        
+        Reader localReader = new StringReader(PhpScriptEngine.getStandardHeader(((IContext)getContext()).getRedirectURL("/JavaBridge")));
 
         char[] buf = new char[Util.BUF_SIZE];
         int c;

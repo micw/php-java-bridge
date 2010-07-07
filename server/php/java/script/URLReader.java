@@ -184,11 +184,11 @@ public class URLReader extends Reader implements IScriptReader {
         	if (val!=null) conn.setRequestProperty (key, val);
             }
             
-            String overrideHosts = (String) env.get("X_JAVABRIDGE_OVERRIDE_HOSTS");
+            String overrideHosts = (String) env.get(Util.X_JAVABRIDGE_OVERRIDE_HOSTS);
             if(overrideHosts!=null) {
-                conn.setRequestProperty("X_JAVABRIDGE_OVERRIDE_HOSTS", overrideHosts);
+                conn.setRequestProperty(Util.X_JAVABRIDGE_OVERRIDE_HOSTS, overrideHosts);
                 // workaround for a problem in php (it confuses the OVERRIDE_HOSTS from the environment with OVERRIDE_HOSTS from the request meta-data 
-                conn.setRequestProperty("X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT", overrideHosts);
+                conn.setRequestProperty(Util.X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT, overrideHosts);
             }
             natIn = conn.getInputStream();
             if (headerParser != HeaderParser.DEFAULT_HEADER_PARSER) {

@@ -77,22 +77,6 @@ public class RemoteHttpContextFactory extends SessionFactory implements IContext
 	return id;
     }
     /**{@inheritDoc}*/
-    public String getRedirectString() {
-	if (impl != null) return impl.getRedirectString();
-	throw new IllegalStateException("getRedirectString");
-    }
-    /**{@inheritDoc}*/
-    public String getRedirectString(String webPath) {
-	if (impl != null) return impl.getRedirectString(webPath);
-	throw new IllegalStateException("getRedirectString");
-    }
-   /**{@inheritDoc}*/
-    public String getSocketName() {
-	if (impl != null) return impl.getSocketName();
-	throw new IllegalStateException("getSocketName");
-    }
-
-    /**{@inheritDoc}*/
     public void initialize() {/*empty*/}
 
     /**{@inheritDoc}*/

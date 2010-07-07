@@ -354,19 +354,6 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     public void invalidate() {
 	visitor.invalidate();
     }
-    /**{@inheritDoc}*/  
-    public String getRedirectString() {
-	return visitor.getRedirectString();
-    }
-    /**{@inheritDoc}*/  
-    public String getRedirectString(String webPath) {
-	return visitor.getRedirectString(webPath);
-    }
-    /**{@inheritDoc}*/  
-    public String getSocketName() {
-	return visitor.getSocketName();
-    }
-    
     /**{@inheritDoc}
      */  
     public void parseHeader(Request req,InputStream in) throws IOException {

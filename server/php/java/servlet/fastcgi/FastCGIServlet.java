@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -45,20 +44,20 @@ import javax.servlet.http.HttpServletResponse;
 import php.java.bridge.ILogger;
 import php.java.bridge.Util;
 import php.java.bridge.http.AbstractChannelName;
-import php.java.bridge.http.FCGIConnection;
-import php.java.bridge.http.FCGIConnectionFactory;
-import php.java.bridge.http.FCGIConnectException;
-import php.java.bridge.http.FCGIConnectionException;
-import php.java.bridge.http.FCGIConnectionPool;
 import php.java.bridge.http.ContextServer;
-import php.java.bridge.http.FCGIUtil;
+import php.java.bridge.http.FCGIConnectException;
+import php.java.bridge.http.FCGIConnection;
+import php.java.bridge.http.FCGIConnectionException;
+import php.java.bridge.http.FCGIConnectionFactory;
+import php.java.bridge.http.FCGIConnectionPool;
+import php.java.bridge.http.FCGIIOFactory;
 import php.java.bridge.http.FCGIInputStream;
 import php.java.bridge.http.FCGIOutputStream;
+import php.java.bridge.http.FCGIUtil;
 import php.java.bridge.http.HeaderParser;
 import php.java.bridge.http.IContextFactory;
 import php.java.bridge.http.IFCGIProcess;
 import php.java.bridge.http.IFCGIProcessFactory;
-import php.java.bridge.http.FCGIIOFactory;
 import php.java.servlet.Logger;
 import php.java.servlet.PhpJavaServlet;
 import php.java.servlet.ServletContextFactory;
@@ -558,7 +557,7 @@ public class FastCGIServlet extends HttpServlet implements IFCGIProcessFactory {
 
     protected void setupRequestVariables(HttpServletRequest req, Environment env) {
 	env.allHeaders = new ArrayList();
-	env.includedJava = php_include_java && PhpJavaServlet.getHeader("X_JAVABRIDGE_INCLUDE", req) == null;
+	env.includedJava = php_include_java && PhpJavaServlet.getHeader(Util.X_JAVABRIDGE_INCLUDE, req) == null;
 
 	env.contextPath = (String) req.getAttribute("javax.servlet.include.context_path");
 	if (env.contextPath == null) env.contextPath = req.getContextPath();
@@ -668,45 +667,10 @@ public class FastCGIServlet extends HttpServlet implements IFCGIProcessFactory {
 
 	env.environment = envp;
 
-	    
-	/* Inform the client that we are a cgi servlet and send the re-direct port */
-	String override;
-	if(override_hosts) { 
-	    try {
-		StringBuffer buf = new StringBuffer();
-		buf.append(env.environment.get("SERVER_PORT"));
-		buf.append("/");
-		buf.append(env.contextPath);
-		buf.append(env.servletPath);
-		URI uri = new URI(req.isSecure()?"s:127.0.0.1":"h:127.0.0.1", buf.toString(), null);
-		override = uri.toASCIIString()+".phpjavabridge";
-	    } catch (Exception e) {
-		Util.printStackTrace(e);
-      		  
-		StringBuffer buf = new StringBuffer();
-		if(!req.isSecure())
-		    buf.append("h:");
-		else
-		    buf.append("s:");
-		buf.append("127.0.0.1");
-		buf.append(":");
-		buf.append(env.environment.get("SERVER_PORT")); 
-		buf.append('/');
-		buf.append(env.requestUri);
-		buf.append(".phpjavabridge");
-		override = buf.toString();
-	    }
-	}
-	else 
-	    override = "";
-
 	if (env.includedJava) {
 	    env.environment.put("X_JAVABRIDGE_INCLUDE_ONLY", "1");
 	    env.environment.put("X_JAVABRIDGE_INCLUDE", ServletUtil.getRealPath(getServletContext(), env.servletPath));
 	}
-	env.environment.put("X_JAVABRIDGE_OVERRIDE_HOSTS", override);
-	// same for fastcgi, which already contains X_JAVABRIDGE_OVERRIDE_HOSTS=/ in its environment
-	env.environment.put("X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT", override); 
 	env.environment.put("REDIRECT_STATUS", "200");
 	env.environment.put("SERVER_SOFTWARE", Util.EXTENSION_NAME);
 	env.environment.put("HTTP_HOST", env.environment.get("SERVER_NAME")+":"+env.environment.get("SERVER_PORT"));
@@ -731,18 +695,18 @@ public class FastCGIServlet extends HttpServlet implements IFCGIProcessFactory {
 	        
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */
-	String id = PhpJavaServlet.getHeader("X_JAVABRIDGE_CONTEXT", req);
+	String id = PhpJavaServlet.getHeader(Util.X_JAVABRIDGE_CONTEXT, req);
 	if(id==null) {
 	    id = (env.ctx=ServletContextFactory.addNew(contextServer, this, getServletContext(), req, req, res)).getId();
 		// short path S1: no PUT request
 		AbstractChannelName channelName = contextServer.getChannelName(env.ctx);
 		if (channelName != null) {
-		    env.environment.put("X_JAVABRIDGE_REDIRECT", channelName.getName());
+		    env.environment.put(Util.X_JAVABRIDGE_REDIRECT, channelName.getName());
 		    env.ctx.getBridge();
 		    contextServer.start(channelName, logger);
 		}
 	}
-	env.environment.put("X_JAVABRIDGE_CONTEXT", id);
+	env.environment.put(Util.X_JAVABRIDGE_CONTEXT, id);
     }
     /**
      * Optimized run method for FastCGI. Makes use of the large FCGI_BUF_SIZE and the specialized in.read(). 

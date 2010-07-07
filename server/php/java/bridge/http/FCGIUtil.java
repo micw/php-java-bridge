@@ -28,7 +28,7 @@ import php.java.bridge.Util;
 
 /**
  * Constants and common procedures for FastCGI
- * @author user
+ * @author jostb
  *
  */
 public class FCGIUtil {

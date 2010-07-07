@@ -28,14 +28,11 @@ import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.io.Reader;
-import java.io.Writer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Iterator;
@@ -197,7 +194,7 @@ public class JavaBridgeRunner extends HttpServer {
 	sout = new ChunkedOutputStream(res.getOutputStream());
 
 	RemoteHttpContextFactory ctx = new RemoteHttpContextFactory(req, res);
-	res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
+	res.setHeader(Util.X_JAVABRIDGE_CONTEXT, ctx.getId());
 	res.setHeader("Pragma", "no-cache");
 	res.setHeader("Keep-Alive", "timeout=-1, max=-1");
 	try {
@@ -330,64 +327,7 @@ public class JavaBridgeRunner extends HttpServer {
      * @throws IOException
      */
     protected boolean handleScriptContent(String name, String params, File f, int length, HttpRequest req, HttpResponse res) throws IOException {
-		if("show".equals(params)) 
-		    return false;
-		
-		int extIdx = name.lastIndexOf('.');
-		if(extIdx == -1) return false;
-		String ext = name.substring(extIdx+1);
-		try {
-		Class c = Class.forName("javax.script.ScriptEngineManager");
-		Object o = c.newInstance();
-		Method e = c.getMethod("getEngineByExtension", new Class[] {String.class});
-		if("php".equals(ext)) 
-		    ext="phtml"; // we don't want bug reports from "quercus" users
-		Object engine = e.invoke(o, (Object[])new String[]{ext});
-
-		if(engine==null) {
-		    e = c.getMethod("getEngineByName", new Class[] {String.class});
-		    engine = e.invoke(o, (Object[])new String[]{ext});
-		}
-		if(engine==null) return false;
-		ByteArrayOutputStream xout = new ByteArrayOutputStream();
-
-		Method getContext = engine.getClass().getMethod("getContext", new Class[] {});
-		Method eval = engine.getClass().getMethod("eval", new Class[] {Reader.class});
-		Object ctx = getContext.invoke(engine, new Object[] {});
-		Method setWriter = ctx.getClass().getMethod("setWriter", new Class[] {Writer.class});
-		Method setErrorWriter = ctx.getClass().getMethod("setErrorWriter", new Class[] {Writer.class});
-		PrintWriter writer = new PrintWriter(new OutputStreamWriter(xout, Util.UTF8));
-		setWriter.invoke(ctx, new Object[] {writer});
-
-		setErrorWriter.invoke(ctx, new Object[] {writer});
-
-		StringBuffer buf = new StringBuffer("/");
-		buf.append(name);
-		if(params!=null) {
-		    buf.append("?");
-		    buf.append(params);
-		}
-
-		FileReader r = null;;
-		try {
-		    eval.invoke(engine, new Object[] {r=new FileReader(f)});
-                } catch (Throwable e1) {
-                    e1.printStackTrace(writer);
-                    Util.printStackTrace(e1);
-                } finally {	
-                    try { eval.invoke(engine, new Object[] {null});} catch (Exception e1) {/*ignore*/};
-                    if(r!=null) try { r.close(); } catch (Exception e1) {/*ignore*/};                
-                 }
-                res.addHeader("Content-Type", "text/html; charset=UTF-8");
-                res.setContentLength(xout.size());
-		OutputStream out = res.getOutputStream();
-		writer.close();
-                xout.writeTo(out);
-		} catch (Exception e) {
-		    Util.printStackTrace(e);
-		    return false;
-		}
-                return true;
+	return true;
     }
     /**
      * Display a simple text file

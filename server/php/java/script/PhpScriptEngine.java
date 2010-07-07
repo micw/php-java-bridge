@@ -37,6 +37,7 @@ import javax.script.ScriptContext;
 import javax.script.ScriptException;
 
 import php.java.bridge.Util;
+import php.java.bridge.http.IContext;
 
 /**
  * This class implements the ScriptEngine.<p>
@@ -89,7 +90,7 @@ public class PhpScriptEngine extends AbstractPhpScriptEngine {
 	    Reader localReader = null;
 	    char[] buf = new char[Util.BUF_SIZE];
 	    int c;
-	    localReader = new StringReader(getStandardHeader("http://127.0.0.1:"+ctx.getSocketName()+"/JavaBridge"));
+	    localReader = new StringReader(getStandardHeader(((IContext)getContext()).getRedirectURL("/JavaBridge")));
 	    while((c=localReader.read(buf))>0) w.write(buf, 0, c);
 	    localReader.close(); localReader=null;
 

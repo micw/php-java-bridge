@@ -197,4 +197,20 @@ public abstract class PhpScriptContextDecorator implements IPhpScriptContext {
             ResultProxy result, ILogger logger) {
 	return ctx.createContinuation(reader, env, out, err, headerParser, result, logger);
     }
+    /**{@inheritDoc}*/
+    public String getRedirectString(String webPath) {
+	return ctx.getRedirectString(webPath);
+    }
+    /**{@inheritDoc}*/
+    public String getRedirectString() {
+	return getRedirectString("/JavaBridge");
+    }
+    /**{@inheritDoc}*/
+    public String getSocketName() {
+	return ctx.getSocketName();
+    }
+    /**{@inheritDoc}*/
+    public String getRedirectURL(String webPath) {
+	return ctx.getRedirectURL(webPath);
+    }
 }

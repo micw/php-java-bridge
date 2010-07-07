@@ -62,6 +62,7 @@ public abstract class HttpServer implements Runnable {
     protected ISocketFactory socket;
     protected Thread httpServer;
     private AppThreadPool pool;
+    protected boolean isSecure;
 
     /**
      * Create a server socket.
@@ -94,6 +95,7 @@ public abstract class HttpServer implements Runnable {
      * @see HttpServer#destroy()
      */
     protected HttpServer(String serverPort, boolean isSecure) throws IOException {
+	this.isSecure = isSecure;
 	if(serverPort==null) serverPort = "0";
 	if(!serverPort.startsWith("INET")) serverPort = (Util.JAVABRIDGE_PROMISCUOUS ? "INET:" : "INET_LOCAL:") + serverPort;
 	socket = isSecure ? bindSecure(serverPort) : bind(serverPort);

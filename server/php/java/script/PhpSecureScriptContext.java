@@ -1,6 +1,10 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 
-package php.java.bridge.http;
+package php.java.script;
+
+import javax.script.ScriptContext;
+
+import php.java.bridge.Util;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -24,38 +28,29 @@ package php.java.bridge.http;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import java.io.IOException;
-import java.io.OutputStream;
 
 /**
- * Common methods for all FCGIProcesses
+ * A decorator which enables secure (HTTPS) connections. 
+ * Call <code>engine.setContext(new PhpSecureScriptContext(engine.getContext()))</code> before executing the engine.
  * @author jostb
  *
  */
-public interface IFCGIProcess {
+public class PhpSecureScriptContext extends PhpScriptContextDecorator {
 
     /**
-     * Start a new FCGIProcess
-     * @throws IOException
+     * Create a new PhpCompiledScriptContext using an existing
+     * PhpScriptContext
+     * @param ctx the script context to be decorated
      */
-    public void start() throws IOException;
-
-    /**
-     * Wait for a FCGIProcess until it has been terminated or interrupted
-     * @return the process return value
-     * @throws InterruptedException
-     */
-    public int waitFor() throws InterruptedException;
-
-    /**
-     * Get the process output stream
-     * @return the output stream
-     */
-    public OutputStream getOutputStream();
-
-    /**
-     * Terminate the process
-     */
-    public void destroy();
-
+    public PhpSecureScriptContext(ScriptContext ctx) {
+	super((IPhpScriptContext)ctx);
+    }
+    /**{@inheritDoc}*/
+    public String getRedirectString(String webPath) {
+	return Util.getSimpleRedirectString(webPath, getSocketName(), true);
+    }
+    /**{@inheritDoc}*/
+    public String getRedirectURL(String webPath) {
+	return "https://127.0.0.1:"+getSocketName()+webPath;
+    }
 }

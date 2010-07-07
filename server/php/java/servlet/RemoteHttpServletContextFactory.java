@@ -115,21 +115,6 @@ public class RemoteHttpServletContextFactory extends JavaBridgeFactory implement
 	return id;
     }
     /**{@inheritDoc}*/
-    public String getRedirectString() {
-	if (impl != null) return impl.getRedirectString();
-	throw new IllegalStateException("getRedirectString");
-    }
-    /**{@inheritDoc}*/
-    public String getRedirectString(String webPath) {
-	if (impl != null) return impl.getRedirectString(webPath);
-	throw new IllegalStateException("getRedirectString");
-    }
-   /**{@inheritDoc}*/
-    public String getSocketName() {
-	if (impl != null) return impl.getSocketName();
-	throw new IllegalStateException("getSocketName");
-    }
-    /**{@inheritDoc}*/
     public ISession getSimpleSession(String name, boolean clientIsNew,
             int timeout) {
 	throw new IllegalStateException("Named sessions not supported by servlet.");

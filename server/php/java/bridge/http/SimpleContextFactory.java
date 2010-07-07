@@ -26,12 +26,9 @@ package php.java.bridge.http;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
 
 import php.java.bridge.ISession;
 import php.java.bridge.JavaBridge;
-import php.java.bridge.NotImplementedException;
 import php.java.bridge.Request;
 import php.java.bridge.Util;
 
@@ -182,35 +179,6 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
 	visited.recycle();
     }
 
-    /**{@inheritDoc}*/
-    public String getSocketName() {
-	throw new NotImplementedException("Use the JSR 223 API or a servlet environment instead");
-    }
-    /**{@inheritDoc}*/
-    public String getRedirectString() {
-	return getRedirectString("/JavaBridge");
-    }
-    /**{@inheritDoc}*/
-    public String getRedirectString(String webPath) {
-	try {
-	    StringBuffer buf = new StringBuffer();
-	    buf.append(getSocketName());
-	    buf.append("/");
-	    buf.append(webPath);
-	    URI uri = new URI("h:127.0.0.1", buf.toString(), null);
-	    return (uri.toASCIIString()+".phpjavabridge");
-	} catch (URISyntaxException e) {
-	    Util.printStackTrace(e);
-        }
-	StringBuffer buf = new StringBuffer("h:127.0.0.1:");
-	buf.append(getSocketName()); 
-	buf.append('/');
-	buf.append(webPath);
-	buf.append(".phpjavabridge");
-	return buf.toString();
-    }
-
-    
     /**
      * {@inheritDoc}
      */

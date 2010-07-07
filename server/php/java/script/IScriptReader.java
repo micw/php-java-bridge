@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
 
+import php.java.bridge.Util;
 import php.java.bridge.http.HeaderParser;
 
 /**
@@ -39,18 +40,9 @@ import php.java.bridge.http.HeaderParser;
  */
 public interface IScriptReader {
 
-    /** The X_JAVABRIDGE_CONTEXT for the Http tunnel */
-    public static final String COOKIE = "COOKIE";
-
-    /** The standard Context ID used by the ContextFactory */
-    public static final String X_JAVABRIDGE_CONTEXT = "X_JAVABRIDGE_CONTEXT";
-    
-    /** Used to re-direct back to the current VM */
-    public static final String X_JAVABRIDGE_OVERRIDE_HOSTS = "X_JAVABRIDGE_OVERRIDE_HOSTS";
-    
     /** These header values appear in the environment map passed to PHP */
-    public static final String[] HEADER = new String[]{COOKIE, X_JAVABRIDGE_CONTEXT, X_JAVABRIDGE_OVERRIDE_HOSTS, 
-	"X_JAVABRIDGE_INCLUDE_ONLY", "X_JAVABRIDGE_INCLUDE", "X_JAVABRIDGE_REDIRECT", "X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT"};
+    public static final String[] HEADER = new String[]{Util.X_JAVABRIDGE_CONTEXT, Util.X_JAVABRIDGE_OVERRIDE_HOSTS, 
+	Util.X_JAVABRIDGE_INCLUDE_ONLY, Util.X_JAVABRIDGE_INCLUDE, Util.X_JAVABRIDGE_REDIRECT, Util.X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT};
 
     /**
      * Read from the URL and write the data to out.

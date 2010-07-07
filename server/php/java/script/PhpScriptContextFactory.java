@@ -51,9 +51,5 @@ public class PhpScriptContextFactory extends php.java.bridge.http.SimpleContextF
     public PhpScriptContextFactory() {
 	super(ContextFactory.EMPTY_CONTEXT_NAME, true);
     }
-    /**{@inheritDoc}*/
-    public String getSocketName() {
-	return PhpScriptContext.bridgeRunner.getSocket().getSocketName();
-    }
 }
 

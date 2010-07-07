@@ -31,7 +31,7 @@ import javax.script.ScriptEngine;
 
 /**
  * Common methods for all PHP script engines
- * @author user
+ * @author jostb
  *
  */
 public interface IPhpScriptEngine extends ScriptEngine, Compilable, java.io.FileFilter {

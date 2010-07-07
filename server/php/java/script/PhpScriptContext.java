@@ -47,8 +47,8 @@ import php.java.bridge.http.IContext;
  * @author jostb
  *
  */
-public final class PhpScriptContext extends AbstractPhpScriptContext implements IPhpScriptContext {
 
+public final class PhpScriptContext extends AbstractPhpScriptContext implements IPhpScriptContext {
     public PhpScriptContext(ScriptContext ctx) {
 	super(ctx);
     }
@@ -138,5 +138,21 @@ public final class PhpScriptContext extends AbstractPhpScriptContext implements 
             OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy result,
             ILogger logger) {
     		return new HttpProxy(reader, env, out,  err, headerParser, result, logger); 
+    }
+    /**{@inheritDoc}*/
+    public String getSocketName() {
+	return PhpScriptContext.bridgeRunner.getSocket().getSocketName();
+    }
+    /**{@inheritDoc}*/
+    public String getRedirectString() {
+	return getRedirectString("/JavaBridge");
+    }
+    /**{@inheritDoc}*/
+    public String getRedirectString(String webPath) {
+	return Util.getSimpleRedirectString(webPath, getSocketName(), false);
+    }
+    /**{@inheritDoc}*/
+    public String getRedirectURL(String webPath) {
+	return "http://127.0.0.1:"+getSocketName()+webPath;
     }
 }

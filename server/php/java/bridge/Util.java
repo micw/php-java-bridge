@@ -32,6 +32,8 @@ import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.text.DateFormat;
 import java.util.HashMap;
@@ -83,6 +85,20 @@ public final class Util {
     
     /** The PHP argument allow_url_include=On, passed to all JSR223 script engines */
     public static final String[] ALLOW_URL_INCLUDE = {"-d", "allow_url_include=On"};
+
+    /** Used to re-direct back to the current VM */
+    public static final String X_JAVABRIDGE_OVERRIDE_HOSTS = "X_JAVABRIDGE_OVERRIDE_HOSTS";
+
+    /** The standard Context ID used by the ContextFactory */
+    public static final String X_JAVABRIDGE_CONTEXT = "X_JAVABRIDGE_CONTEXT";
+
+    public static final String X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT = "X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT";
+
+    public static final String X_JAVABRIDGE_REDIRECT = "X_JAVABRIDGE_REDIRECT";
+
+    public static final String X_JAVABRIDGE_INCLUDE = "X_JAVABRIDGE_INCLUDE";
+
+    public static final String X_JAVABRIDGE_INCLUDE_ONLY = "X_JAVABRIDGE_INCLUDE_ONLY";
     
     private Util() {}
     
@@ -378,7 +394,7 @@ public final class Util {
 	
 	// resolve java.io.tmpdir for windows; PHP doesn't like dos short file names like foo~1\bar~2\...
 	TMPDIR = new File(System.getProperty("java.io.tmpdir", "/tmp"));
-	if (!(TMPDIR.exists() && TMPDIR.isDirectory())) TMPDIR = null;
+	if (!TMPDIR.exists() || !TMPDIR.isDirectory()) TMPDIR = null;
 	String sessionSavePath = null;
 	if (TMPDIR != null) try {TMPDIR = TMPDIR.getCanonicalFile(); } catch (IOException ex) {/*ignore*/}
 	
@@ -1440,5 +1456,24 @@ public final class Util {
     }
     public static final Class classForName(String name) throws ClassNotFoundException {
 	return Class.forName(name, true, getContextClassLoader());
+    }
+
+    public static String getSimpleRedirectString(String webPath, String socketName, boolean isSecure) {
+	try {
+	    StringBuffer buf = new StringBuffer();
+	    buf.append(socketName);
+	    buf.append("/");
+	    buf.append(webPath);
+	    URI uri = new URI(isSecure?"s:127.0.0.1":"h:127.0.0.1", buf.toString(), null);
+	    return (uri.toASCIIString()+".phpjavabridge");
+	} catch (URISyntaxException e) {
+	    Util.printStackTrace(e);
+	}
+	StringBuffer buf = new StringBuffer(isSecure?"s:127.0.0.1":"h:127.0.0.1:");
+	buf.append(socketName); 
+	buf.append('/');
+	buf.append(webPath);
+	buf.append(".phpjavabridge");
+	return buf.toString();
     }
 }

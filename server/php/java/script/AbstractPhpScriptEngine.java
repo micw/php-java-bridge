@@ -118,10 +118,13 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
     protected void setStandardEnvironmentValues (Map env) {
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */
-	env.put("X_JAVABRIDGE_CONTEXT", ctx.getId());
+	env.put(Util.X_JAVABRIDGE_CONTEXT, ctx.getId());
 	
 	/* the client should connect back to us */
-	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", ctx.getRedirectString());
+	String redirect = ((IContext)getContext()).getRedirectString();
+	env.put(Util.X_JAVABRIDGE_OVERRIDE_HOSTS, redirect);
+        // workaround for a problem in php (it confuses the OVERRIDE_HOSTS from the environment with OVERRIDE_HOSTS from the request meta-data 
+	env.put(Util.X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT, redirect);
     }
     protected void addNewContextFactory() {
 	ctx = PhpScriptContextFactory.addNew((IContext)getContext());
@@ -158,15 +161,15 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
     }
     
     protected Object evalPhp(Reader reader, ScriptContext context) throws ScriptException {
-	setContext(new PhpScriptContext(context));
+	setContext(getContext());
         return doEvalPhp(reader, getContext());
     }
     protected Object evalCompiledPhp(Reader reader, ScriptContext context) throws ScriptException {
-	setContext(new PhpCompiledScriptContext(new PhpScriptContext(context)));
+	setContext(getContext());
 	return doEvalCompiledPhp(reader, getContext());
     }
     protected void compilePhp(Reader reader, ScriptContext context) throws IOException {
-	setContext(new PhpScriptContext(context));
+	setContext(getContext());
   	setNewContextFactory();
   	
 	FileWriter writer = new FileWriter(this.compilerOutputFile);
@@ -356,6 +359,21 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
         } catch (IOException e) {
             throw new ScriptException(e);
         }
+    }
+    private ScriptContext ctxCache;
+    /** {@inheritDoc} */
+    public ScriptContext getContext() {
+	if (ctxCache==null) {
+	    ctxCache = new PhpScriptContext(super.getContext());
+	}
+	return ctxCache;
+    }
+    /** {@inheritDoc} */
+    public void setContext(ScriptContext ctx) {
+	super.setContext(ctxCache = ctx);
+	if (!(ctx instanceof IPhpScriptContext)) {
+	    setContext(getContext());
+	}
     }
     /** {@inheritDoc} */
     public boolean accept(File outputFile) {

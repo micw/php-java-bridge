@@ -139,7 +139,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     protected SimpleServletContextFactory getContextFactory(HttpServletRequest req, HttpServletResponse res) {
     	JavaBridge bridge;
 	SimpleServletContextFactory ctx = null;
-    	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
+    	String id = req.getHeader(Util.X_JAVABRIDGE_CONTEXT);
     	if(id!=null) ctx = (SimpleServletContextFactory) ContextFactory.get(id);
     	if(ctx==null) {
     	  ctx = (SimpleServletContextFactory) RemoteServletContextFactory.addNew(this, getServletContext(), null, req, res); // no session sharing
@@ -150,7 +150,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     	    bridge.logDebug("redirect");
     	}
     	updateRequestLogLevel(bridge);
-    	res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
+    	res.setHeader(Util.X_JAVABRIDGE_CONTEXT, ctx.getId());
     	return ctx;
     }
     /**
@@ -236,7 +236,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	throws ServletException, IOException {
 
 	RemoteHttpServletContextFactory ctx = new RemoteHttpServletContextFactory(this, getServletContext(), req, req, res);
-	res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
+	res.setHeader(Util.X_JAVABRIDGE_CONTEXT, ctx.getId());
 	res.setHeader("Pragma", "no-cache");
 	res.setHeader("Cache-Control", "no-cache");
 	res.setHeader("Keep-Alive", keepAliveParam);

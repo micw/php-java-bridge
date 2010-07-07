@@ -119,21 +119,4 @@ public interface IContextFactory extends IJavaBridgeFactory {
     * @see IContextFactory#destroy()
     */
    public void initialize ();
-   /**
-    * Return the redirect string, for example h:localhost:8080/webPath
-    * @param webPath Usually request.getContextPath()+request.getServletPath()
-    * @return the redirect string
-    */
-   public String getRedirectString(String webPath);
-   /**
-    * Return the redirect string, for example h:localhost:8080/JavaBridge/test.php
-    * @return the redirect string
-    */
-   public String getRedirectString();
-
-   /**
-    * Return the socket name, for example 8080
-    * @return the socket name
-    */
-   public String getSocketName();
 }

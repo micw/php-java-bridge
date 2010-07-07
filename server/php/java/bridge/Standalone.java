@@ -25,6 +25,7 @@ package php.java.bridge;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.ServerSocket;
 
 import javax.swing.JOptionPane;
@@ -207,7 +208,15 @@ public class Standalone {
 	String serverPort = (Util.JAVABRIDGE_PROMISCUOUS ? "INET:" :"INET_LOCAL:") +sockname;
 	Util.logMessage("JavaBridgeRunner started on port " + serverPort);
 
-	JavaBridgeRunner r = JavaBridgeRunner.getRequiredInstance(serverPort, isSecure);
+	Class runner = JavaBridgeRunner.class;
+	JavaBridgeRunner r;
+	try {
+	    runner = Util.classForName("php.java.script.JavaBridgeScriptRunner");
+	    Method m = runner.getMethod("getRequiredInstance", new Class[]{String.class, Boolean.TYPE});
+	    r = (JavaBridgeRunner)m.invoke(runner, new Object[]{serverPort, isSecure});
+        } catch (Exception e) {
+            r = php.java.script.JavaBridgeScriptRunner.getRequiredInstance(serverPort, isSecure);
+        }
 	r.waitFor();
 	r.destroy();
 

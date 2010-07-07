@@ -37,6 +37,7 @@ import java.util.Map;
 
 import php.java.bridge.IManaged;
 import php.java.bridge.Invocable;
+import php.java.bridge.NotImplementedException;
 import php.java.bridge.Util;
 
 
@@ -305,5 +306,21 @@ public class Context implements IManaged, Invocable, IContext {
     /**{@inheritDoc}*/
     public Map getAll() {
 	return Collections.unmodifiableMap(getEngineScope());
+    }
+    /**{@inheritDoc}*/
+    public String getSocketName() {
+	throw new NotImplementedException("Use the JSR 223 API or a servlet environment instead");
+    }
+    /**{@inheritDoc}*/
+    public String getRedirectString() {
+	return getRedirectString("/JavaBridge");
+    }
+    /**{@inheritDoc}*/
+    public String getRedirectString(String webPath) {
+	return Util.getSimpleRedirectString(webPath, getSocketName(), false);
+    }
+    /**{@inheritDoc}*/
+    public String getRedirectURL(String webPath) {
+	return "http://127.0.0.1:"+getSocketName()+webPath;
     }
 }

@@ -222,4 +222,24 @@ public interface IContext {
         * @return the map
         */
        public Map getAll();
+       /**
+        * Return the redirect string, for example h:localhost:8080/webPath
+        * @param webPath Usually request.getContextPath()+request.getServletPath()
+        * @return the redirect string
+        */
+       public String getRedirectURL(String webPath);
+       /**
+	* @deprecated Use getRedirectURL
+        */
+       public String getRedirectString(String webPath);
+       /**
+	* @deprecated Use getRedirectURL
+        */
+       public String getRedirectString();
+
+       /**
+        * Return the socket name, for example 8080
+        * @return the socket name
+        */
+       public String getSocketName();
 }
