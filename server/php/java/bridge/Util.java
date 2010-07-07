@@ -399,6 +399,7 @@ public final class Util {
 	if (TMPDIR != null) try {TMPDIR = TMPDIR.getCanonicalFile(); } catch (IOException ex) {/*ignore*/}
 	
 	if (TMPDIR != null) {
+	    sessionSavePath = TMPDIR.getPath();
 	    try {
 		sessionSavePath = java.net.URLEncoder.encode("session.save_path='"+sessionSavePath+"'", "UTF-8");
 	    } catch (UnsupportedEncodingException e) {
