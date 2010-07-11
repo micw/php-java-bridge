@@ -65,7 +65,12 @@ public class ContextRunner implements Runnable {
     protected AbstractChannel channel;
     protected ILogger logger;
     
-    protected ContextRunner(AbstractChannel channel, ILogger logger) {
+    /**
+     * Create a new ContextRunner from a ThreadPool
+     * @param channel the communication channel
+     * @param logger the current logger
+     */
+    public ContextRunner(AbstractChannel channel, ILogger logger) {
 	this.channel = channel;
 	this.logger = logger;
     }

@@ -168,11 +168,12 @@ public class InvocablePhpScriptEngine extends AbstractPhpScriptEngine implements
 	Class[] interfaces = clasz==null?Util.ZERO_PARAM:new Class[]{clasz};
 	return PhpProcedure.createProxy(interfaces, (PhpProcedure)Proxy.getInvocationHandler(thiz));
     }
-    protected Reader getLocalReader(Reader reader) throws IOException {
+    protected Reader getLocalReader(Reader reader, boolean embedJavaInc) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Writer w = new OutputStreamWriter(out);
-        
-        Reader localReader = new StringReader(PhpScriptEngine.getStandardHeader(((IContext)getContext()).getRedirectURL("/JavaBridge")));
+
+        String stdHeader = embedJavaInc ? null : ((IContext)getContext()).getRedirectURL("/JavaBridge");
+        Reader localReader = new StringReader(getStandardHeader(stdHeader));
 
         char[] buf = new char[Util.BUF_SIZE];
         int c;
@@ -208,7 +209,7 @@ public class InvocablePhpScriptEngine extends AbstractPhpScriptEngine implements
 	env.put(X_JAVABRIDGE_INCLUDE, EMPTY_INCLUDE);
 	Reader localReader = null;
         try {
-            localReader = getLocalReader(reader);
+            localReader = getLocalReader(reader, false);
             this.script = doEval(localReader, context);
             if (this.script!=null) {
         	/* get the proxy, either the one from the user script or our default proxy */

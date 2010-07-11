@@ -260,6 +260,6 @@ public class RemoteHttpServletContextFactory extends JavaBridgeFactory implement
     * </blockquote>
     */
    public void handleRequests(InputStream in, OutputStream out) throws IOException {
-       getBridge().handleRequests(in, out, (ILogger) kontext.getAttribute(ContextLoaderListener.LOGGER));
+       getBridge().handleRequests(in, out, (ILogger) ContextLoaderListener.getContextLoaderListener(kontext).getLogger());
    }
 }

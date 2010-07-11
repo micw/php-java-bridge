@@ -31,6 +31,7 @@ package php.java.script;
  */
 public class CloseablePhpScriptEngineDecorator extends PhpScriptEngineDecorator implements java.io.Closeable {
 
+    /** {@inheritDoc} */
     public CloseablePhpScriptEngineDecorator(IPhpScriptEngine engine) {
 	super(engine);
     }

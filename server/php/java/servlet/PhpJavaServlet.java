@@ -97,7 +97,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	
 	if(value.equals("off") || value.equals("false")) promiscuous=false;
 	if(value.equals("on") || value.equals("true")) promiscuous=true;
-	try { contextServer = getContextServer(ctx, promiscuous); } catch (Throwable e) {/*ignore*/}
+	contextServer = ContextLoaderListener.getContextLoaderListener(ctx).getContextServer();
     	 
     	super.init(config);
        
@@ -116,14 +116,6 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 
     /**{@inheritDoc}*/
     public void destroy() {
-	ServletContext ctx = getServletContext();
-	try {
-	    ContextLoaderListener.destroyCloseables(ctx);
-	} catch (Exception e) {
-	    Util.printStackTrace(e);
-	}
-	
-      	if (contextServer != null) contextServer.destroy();
     	super.destroy();
     }
     /**
@@ -284,18 +276,5 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	throws ServletException, IOException {
       		String uri = req.getRequestURI();
      		req.getRequestDispatcher(uri.substring(0, uri.length()-10)).forward(req, res);
-    }
-
-    private static final String ROOT_CONTEXT_SERVER_ATTRIBUTE = ContextServer.class.getName()+".ROOT";
-    /** Only for internal use */
-    public static synchronized ContextServer getContextServer(ServletContext context, boolean promiscuous) {
-	ContextServer server = (ContextServer)context.getAttribute(ROOT_CONTEXT_SERVER_ATTRIBUTE);
-	if (server == null) {
-	    String servletContextName=ServletUtil.getRealPath(context, "");
-	    if(servletContextName==null) servletContextName="";
-	    server = new ContextServer(servletContextName, promiscuous);
-	    context.setAttribute(ROOT_CONTEXT_SERVER_ATTRIBUTE, server);
-	}
-	return server;
     }
 }

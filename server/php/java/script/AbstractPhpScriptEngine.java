@@ -24,12 +24,18 @@ package php.java.script;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringReader;
+import java.lang.reflect.Field;
+import java.security.DigestOutputStream;
+import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -62,6 +68,8 @@ import php.java.bridge.http.WriterOutputStream;
  */
 abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements IPhpScriptEngine, Compilable, java.io.FileFilter {
 
+    /** The current script engine or its decorator. Used by compileable */
+    protected ScriptEngine thiz;
 	
     /**
      * The allocated script
@@ -79,6 +87,8 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
     private ScriptEngineFactory factory = null;
     protected ResultProxy resultProxy;
     protected File compilerOutputFile;
+
+    private boolean isCompiled;
 
     static HashMap getProcessEnvironment() {
 	return Util.COMMON_ENVIRONMENT;
@@ -99,6 +109,7 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
      * Create a new ScriptEngine with a default context.
      */
     public AbstractPhpScriptEngine() {
+	this.setEngine (this);
     }
 
     /**
@@ -110,7 +121,13 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
         this();
         this.factory = factory;
     }
-
+    /**
+     * Set the current script engine
+     * @param engine this or its decorator
+     */
+    public void setEngine(IPhpScriptEngine engine) {
+	this.thiz = engine;
+    }
     /**
      * Set the context id (X_JAVABRIDGE_CONTEXT) and the override flag (X_JAVABRIDGE_OVERRIDE_HOSTS) into env
      * @param env the environment which will be passed to PHP
@@ -121,7 +138,7 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
 	env.put(Util.X_JAVABRIDGE_CONTEXT, ctx.getId());
 	
 	/* the client should connect back to us */
-	String redirect = ((IContext)getContext()).getRedirectString();
+	String redirect = ((IContext)getContext()).getRedirectString("/JavaBridge");
 	env.put(Util.X_JAVABRIDGE_OVERRIDE_HOSTS, redirect);
         // workaround for a problem in php (it confuses the OVERRIDE_HOSTS from the environment with OVERRIDE_HOSTS from the request meta-data 
 	env.put(Util.X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT, redirect);
@@ -161,20 +178,64 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
     }
     
     protected Object evalPhp(Reader reader, ScriptContext context) throws ScriptException {
-	setContext(getContext());
+	setContext(context);
         return doEvalPhp(reader, getContext());
     }
     protected Object evalCompiledPhp(Reader reader, ScriptContext context) throws ScriptException {
-	setContext(getContext());
+	setContext(context);
 	return doEvalCompiledPhp(reader, getContext());
     }
+    
+    private static final byte[][] HEX_BYTES = getHexBytes();
+    private static final byte[][] getHexBytes() {
+	byte[][] bytes = new byte[256][2];
+	for (int i=0; i<16; i++) {
+	    for (int j=0; j<16; j++) {
+		int n = (i<<4)+j;
+		bytes[n][0] = Util.HEX_DIGITS[i];
+		bytes[n][1] = Util.HEX_DIGITS[j];
+	    }
+	}
+	return bytes;
+    }
+    private static final String createUniqPhpFileName(Reader reader) {
+	try {
+	    MessageDigest md5 = MessageDigest.getInstance("MD5");
+	    ByteArrayOutputStream bout = new ByteArrayOutputStream();
+	    OutputStream hout = new FilterOutputStream(bout) {
+		public void write(int b) throws IOException {
+                    out.write(HEX_BYTES[b]);
+                }
+	    };
+	    OutputStream out = new DigestOutputStream(hout, md5);
+	    OutputStreamWriter writer = new OutputStreamWriter(out);
+	    char[] buf = new char[Util.BUF_SIZE];
+	    int c;
+	    while((c = reader.read(buf))>0) {
+		writer.write(buf, 0, c);
+	    }
+	    reader.reset();
+	    writer.close();
+	    StringBuilder b = new StringBuilder(bout.toString());
+	    b.append(".php");
+	    return b.toString();
+	} catch (Throwable e) {
+	    throwNoOutputFile();
+	    return null;
+	}
+    }
+   
     protected void compilePhp(Reader reader, ScriptContext context) throws IOException {
-	setContext(getContext());
+	this.isCompiled = true;
+	setContext(context);
   	setNewContextFactory();
   	
-	FileWriter writer = new FileWriter(this.compilerOutputFile);
+  	if (compilerOutputFile == null) {
+  	    compilerOutputFile = new File(Util.TMPDIR, createUniqPhpFileName(reader));
+  	}
+	FileWriter writer = new FileWriter(compilerOutputFile);
 	char[] buf = new char[Util.BUF_SIZE];
-	Reader localReader = getLocalReader(reader);
+	Reader localReader = getLocalReader(reader, true);
 	try {
 		int c;
 		while((c = localReader.read(buf))>0) 
@@ -236,7 +297,7 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
     	if(out instanceof WriterOutputStream)
     	    headerParser = new SimpleHeaderParser((WriterOutputStream)out);
 
-    	Continuation kont = phpScriptContext.createContinuation(reader, env, out,  err, headerParser, resultProxy = new ResultProxy(this), Util.getLogger());
+    	Continuation kont = phpScriptContext.createContinuation(reader, env, out,  err, headerParser, resultProxy = new ResultProxy(this), Util.getLogger(), isCompiled);
 
     	phpScriptContext.setContinuation(kont);
 	return kont;
@@ -244,7 +305,8 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
     /** Method called to evaluate a PHP file w/o compilation */
     protected abstract Object doEvalPhp(Reader reader, ScriptContext context) throws ScriptException;
     protected abstract Object doEvalCompiledPhp(Reader reader, ScriptContext context) throws ScriptException;
-    protected abstract Reader getLocalReader(Reader reader) throws IOException;
+    protected abstract Reader getLocalReader(Reader reader, boolean embedJavaInc) throws IOException;
+    
     /*
      * Obtain a PHP instance for url.
      */
@@ -326,58 +388,109 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
             }
 	}
     }
+    static final void throwNoOutputFile() {
+        throw new IllegalStateException("No compilation output file has been set!");
+    }
     private static final Reader DUMMY_READER = new Reader() {
 	/** {@inheritDoc} */
         public void close() throws IOException {
-            throw new IllegalStateException("use compiled file");
+            throwNoOutputFile();
         }
 	/** {@inheritDoc} */
         public int read(char[] cbuf, int off, int len)
                 throws IOException {
-            throw new IllegalStateException("use compiled file");
+            throwNoOutputFile();
+            return 0;
        }};
+    private static final String STANDARD_HEADER = new String("<?php require_once(\"/java/Java.inc\");" +
+    		"$java_bindings = java_context()->getBindings(100);" +
+    		"$java_scriptname = @java_values($java_bindings['javax.script.filename']);"+
+    		"if(!isset($argv)) $argv = @java_values($java_bindings['javax.script.argv']);"+
+    		"if(!isset($argv)) $argv=array();\n"+
+    		"$_SERVER['SCRIPT_FILENAME'] =  isset($java_scriptname) ? $java_scriptname : '';"+
+    		"array_unshift($argv, $_SERVER['SCRIPT_FILENAME']);"+
+    		"if (!isset($argc)) $argc = count($argv);"+
+    		"$_SERVER['argv'] = $argv;"+
+    		"?>");
+    private static final String STANDARD_HEADER_EMBEDDED = new String("<?php " +
+    		"$java_bindings = java_context()->getBindings(100);" +
+    		"$java_scriptname = @java_values($java_bindings['javax.script.filename']);"+
+    		"if(!isset($argv)) $argv = @java_values($java_bindings['javax.script.argv']);"+
+    		"if(!isset($argv)) $argv=array();\n"+
+    		"$_SERVER['SCRIPT_FILENAME'] =  isset($java_scriptname) ? $java_scriptname : '';"+
+    		"array_unshift($argv, $_SERVER['SCRIPT_FILENAME']);"+
+    		"if (!isset($argc)) $argc = count($argv);"+
+    		"$_SERVER['argv'] = $argv;"+
+    		"?>");
        
     /** {@inheritDoc} */
     public CompiledScript compile(final Reader reader) throws ScriptException {
-	if (this.compilerOutputFile==null) throw new IllegalStateException("No output file given");
 	try {
 	    compilePhp(reader, getContext());
 	    return new CompiledScript() {
 		/** {@inheritDoc} */
-		public Object eval(final ScriptContext context) throws ScriptException {
+		public Object eval(ScriptContext context) throws ScriptException {
 		    try {
-			return AbstractPhpScriptEngine.this.evalCompiledPhp(DUMMY_READER, getContext());
+			return AbstractPhpScriptEngine.this.evalCompiledPhp(DUMMY_READER, context);
 		    } catch (Exception e) {
 			throw new ScriptException(e);
 		    }
 		}
 		/** {@inheritDoc} */
 		public ScriptEngine getEngine() {
-		    return AbstractPhpScriptEngine.this;
+		    return thiz;
 		}
 	    };
         } catch (IOException e) {
             throw new ScriptException(e);
         }
     }
+
+    private String cachedSimpleStandardHeader;
     private ScriptContext ctxCache;
+    private String cachedEmbeddedStandardHeader;
     /** {@inheritDoc} */
     public ScriptContext getContext() {
-	if (ctxCache==null) {
-	    ctxCache = new PhpScriptContext(super.getContext());
+	if (!(ctxCache instanceof IPhpScriptContext)) {
+	    setContext(ctxCache = new PhpScriptContext(super.getContext()));
 	}
 	return ctxCache;
     }
     /** {@inheritDoc} */
-    public void setContext(ScriptContext ctx) {
-	super.setContext(ctxCache = ctx);
-	if (!(ctx instanceof IPhpScriptContext)) {
-	    setContext(getContext());
-	}
+    public void setContext(ScriptContext context) {
+	super.setContext(this.ctxCache = context);
     }
+    private String getSimpleStandardHeader(String filePath) {
+        if (cachedSimpleStandardHeader != null) return cachedSimpleStandardHeader;
+        StringBuffer buf = new StringBuffer(STANDARD_HEADER);
+        buf.insert(20, filePath);
+        return cachedSimpleStandardHeader = buf.toString();
+    }
+
     /** {@inheritDoc} */
     public boolean accept(File outputFile) {
 	this.compilerOutputFile = outputFile;
 	return true;
+    }
+
+    private String getEmbeddedStandardHeader(String filePath) throws IOException {
+        if (cachedEmbeddedStandardHeader!=null) return cachedEmbeddedStandardHeader;
+        try {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            Field f = Util.JAVA_INC.getField("bytes");
+            byte[] buf = (byte[]) f.get(Util.JAVA_INC);
+            out.write(buf);
+    
+            OutputStreamWriter writer = new OutputStreamWriter(out);
+            writer.write(STANDARD_HEADER_EMBEDDED);
+            writer.close();
+            return cachedEmbeddedStandardHeader = out.toString(Util.ASCII);
+        } catch (Exception e) {
+            throw new IOException("Cannot create standard header", e);
+        }
+    }
+
+    protected String getStandardHeader(String filePath) throws IOException {
+        return filePath == null ? getEmbeddedStandardHeader(filePath):getSimpleStandardHeader(filePath);
     }
 }

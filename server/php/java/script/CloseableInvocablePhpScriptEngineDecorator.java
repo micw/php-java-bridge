@@ -32,8 +32,9 @@ import javax.script.ScriptException;
  * A ScriptEngineDecorator implementing the Java 1.5 Closeable and Invocable interface.
  * @author jostb
  */
-public class CloseableInvocablePhpScriptEngineDecorator extends PhpScriptEngineDecorator implements Invocable, java.io.Closeable {
+public class CloseableInvocablePhpScriptEngineDecorator extends CloseablePhpScriptEngineDecorator implements Invocable {
 
+    /** {@inheritDoc} */
     public CloseableInvocablePhpScriptEngineDecorator(IPhpScriptEngine engine) {
 	super(engine);
     }

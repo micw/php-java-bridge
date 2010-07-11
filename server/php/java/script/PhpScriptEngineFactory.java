@@ -42,8 +42,15 @@ public class PhpScriptEngineFactory implements ScriptEngineFactory {
 	    this.hasCloseable = hasCloseable;
 	}
 	public ScriptEngine create () {
-	    if (hasCloseable) return new CloseablePhpScriptEngineDecorator(new PhpScriptEngine(PhpScriptEngineFactory.this));
-	    else return new PhpScriptEngine(PhpScriptEngineFactory.this);
+	    PhpScriptEngine engine = new PhpScriptEngine(PhpScriptEngineFactory.this);
+	    if (hasCloseable) {
+		IPhpScriptEngine decorator = new CloseablePhpScriptEngineDecorator(engine);
+		engine.setEngine(decorator);
+		return decorator;
+	    }
+	    else {
+		return engine;
+	    }
 	}
     }
     protected Factory factory;

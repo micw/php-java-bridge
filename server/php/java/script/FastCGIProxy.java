@@ -36,29 +36,26 @@ import java.util.Map;
 
 import php.java.bridge.ILogger;
 import php.java.bridge.Util;
+import php.java.bridge.http.FCGIConnectException;
 import php.java.bridge.http.FCGIConnection;
 import php.java.bridge.http.FCGIConnectionFactory;
-import php.java.bridge.http.FCGIConnectException;
 import php.java.bridge.http.FCGIConnectionPool;
-import php.java.bridge.http.FCGIUtil;
+import php.java.bridge.http.FCGIIOFactory;
 import php.java.bridge.http.FCGIInputStream;
 import php.java.bridge.http.FCGIOutputStream;
+import php.java.bridge.http.FCGIUtil;
 import php.java.bridge.http.HeaderParser;
 import php.java.bridge.http.IFCGIProcess;
 import php.java.bridge.http.IFCGIProcessFactory;
-import php.java.bridge.http.FCGIIOFactory;
 import php.java.bridge.http.OutputStreamFactory;
+import php.java.script.servlet.HttpFastCGIProxy;
 
 /**
- * This class can be used to run a PHP CGI binary. Used only when
- * running local php scripts.  To allocate and invoke remote scripts
- * please use a HttpProxy and a URLReader instead.
+ * This class can be used to run (and to connect to) a FastCGI server.
  *  
  * @author jostb
  *
- * @see php.java.bridge.http.HttpServer
- * @see php.java.script.URLReader
- * @see php.java.script.HttpProxy
+ * @see HttpFastCGIProxy
  */
 
 public class FastCGIProxy extends Continuation implements IFCGIProcessFactory {
@@ -69,10 +66,9 @@ public class FastCGIProxy extends Continuation implements IFCGIProcessFactory {
     public FastCGIProxy(Reader reader, Map env, OutputStream out,
             OutputStream err, HeaderParser headerParser,
             ResultProxy resultProxy, ILogger logger) {
-	super(reader, env, out, err, headerParser, resultProxy, logger);
+	super(env, out, err, headerParser, resultProxy);
     }
     private FCGIConnectionFactory channelName;
-    private static final String CONTEXT_PATH="";
     static final HashMap PROCESS_ENVIRONMENT = getProcessEnvironment();
     private static HashMap getProcessEnvironment() {
 	HashMap map = new HashMap(Util.COMMON_ENVIRONMENT);
@@ -88,8 +84,8 @@ public class FastCGIProxy extends Continuation implements IFCGIProcessFactory {
 
    private FCGIConnectionPool createConnectionPool(int children) throws FCGIConnectException {
 	channelName = FCGIConnectionFactory.createChannelFactory(this, false);
-	channelName.findFreePort(false); //FIXME
-	channelName.initialize(CONTEXT_PATH);
+	channelName.findFreePort(true);
+	channelName.initialize();
 	File cgiOsDir = Util.TMPDIR;
 	File javaIncFile = new File (cgiOsDir, "launcher.sh");
 	if (Util.USE_SH_WRAPPER) {

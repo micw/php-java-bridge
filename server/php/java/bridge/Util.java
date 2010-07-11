@@ -1030,6 +1030,8 @@ public final class Util {
             
             if (testPhp(php, args)) 
         	runPhp(php, args);
+            else 
+        	throw new IOException("PHP not found. Please install php-cgi. PHP test command was: " + java.util.Arrays.asList(getTestArgumentArray(php, args)) + " ");
         }
 	protected Process(String[] args, File homeDir, Map env, boolean tryOtherLocations, boolean preferSystemPhp) {
 	    this.args = args;

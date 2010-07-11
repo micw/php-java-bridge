@@ -194,8 +194,8 @@ public abstract class PhpScriptContextDecorator implements IPhpScriptContext {
     /**{@inheritDoc}*/
     public Continuation createContinuation(Reader reader, Map env,
             OutputStream out, OutputStream err, HeaderParser headerParser,
-            ResultProxy result, ILogger logger) {
-	return ctx.createContinuation(reader, env, out, err, headerParser, result, logger);
+            ResultProxy result, ILogger logger, boolean isCompiled) {
+	return ctx.createContinuation(reader, env, out, err, headerParser, result, logger, isCompiled);
     }
     /**{@inheritDoc}*/
     public String getRedirectString(String webPath) {

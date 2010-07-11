@@ -66,23 +66,7 @@ public class PhpScriptEngine extends AbstractPhpScriptEngine {
     public PhpScriptEngine(PhpScriptEngineFactory factory) {
         super(factory);
     }
-
-    private static final String STANDARD_HEADER = new String("<?php require_once(\"/java/Java.inc\");" +
-		"$java_bindings = java_context()->getBindings(100);" +
-		"$java_scriptname = @java_values($java_bindings['javax.script.filename']);"+
-		"if(!isset($argv)) $argv = @java_values($java_bindings['javax.script.argv']);"+
-		"if(!isset($argv)) $argv=array();\n"+
-		"$_SERVER['SCRIPT_FILENAME'] =  isset($java_scriptname) ? $java_scriptname : '';"+
-		"array_unshift($argv, $_SERVER['SCRIPT_FILENAME']);"+
-		"if (!isset($argc)) $argc = count($argv);"+
-		"$_SERVER['argv'] = $argv;"+
-		"?>");
-    static String getStandardHeader (String filePath) {
-	StringBuffer buf = new StringBuffer(STANDARD_HEADER);
-	buf.insert(20, filePath);
-	return buf.toString();
-    }
-    protected Reader getLocalReader(Reader reader) throws IOException {
+    protected Reader getLocalReader(Reader reader,boolean embedJavaInc) throws IOException {
         /* header: <? require_once("http://localhost:<ourPort>/JavaBridge/java/Java.inc"); ?> */
 	ByteArrayOutputStream out = new ByteArrayOutputStream();
 	Writer w = new OutputStreamWriter(out);
@@ -90,7 +74,9 @@ public class PhpScriptEngine extends AbstractPhpScriptEngine {
 	    Reader localReader = null;
 	    char[] buf = new char[Util.BUF_SIZE];
 	    int c;
-	    localReader = new StringReader(getStandardHeader(((IContext)getContext()).getRedirectURL("/JavaBridge")));
+	    String stdHeader = embedJavaInc ? null : ((IContext)getContext()).getRedirectURL("/JavaBridge");
+	    localReader = new StringReader(getStandardHeader(stdHeader));
+
 	    while((c=localReader.read(buf))>0) w.write(buf, 0, c);
 	    localReader.close(); localReader=null;
 
@@ -114,7 +100,7 @@ public class PhpScriptEngine extends AbstractPhpScriptEngine {
         Reader localReader = null;
         
         try {
-            localReader = getLocalReader(reader);
+            localReader = getLocalReader(reader, false);
             this.script = doEval(localReader, context);
         } catch (Exception e) {
             Util.printStackTrace(e);

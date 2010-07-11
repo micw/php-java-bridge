@@ -41,7 +41,7 @@ import php.java.bridge.http.IContext;
  * This class implements a simple script context for PHP. It starts a standalone 
  * <code>JavaBridgeRunner</code> which listens for requests from php instances.<p>
  * 
- * In a servlet environment please use a <code>php.java.script.PhpSimpleHttpScriptContext</code> instead.
+ * In a servlet environment please use a <code>php.java.script.http.PhpSimpleHttpScriptContext</code> instead.
  * @see php.java.script.PhpScriptContext
  * @see php.java.bridge.JavaBridgeRunner
  * @author jostb
@@ -136,8 +136,11 @@ public final class PhpScriptContext extends AbstractPhpScriptContext implements 
     /**{@inheritDoc}*/
     public Continuation createContinuation(Reader reader, Map env,
             OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy result,
-            ILogger logger) {
-    		return new HttpProxy(reader, env, out,  err, headerParser, result, logger); 
+            ILogger logger, boolean isCompiled) {
+		if (isCompiled)
+	    		return new FastCGIProxy(reader, env, out,  err, headerParser, result, logger); 
+		else
+    			return new HttpProxy(reader, env, out,  err, headerParser, result, logger); 
     }
     /**{@inheritDoc}*/
     public String getSocketName() {

@@ -57,7 +57,6 @@ import php.java.bridge.http.HttpResponse;
  */
 public class JavaBridgeScriptRunner extends JavaBridgeRunner {
     private ScriptEngineManager m = new ScriptEngineManager();
-    
     protected JavaBridgeScriptRunner() throws IOException {
 	super();
     }

@@ -165,5 +165,13 @@ class SocketChannelFactory extends FCGIConnectionFactory {
     public void destroy() {
 	super.destroy();
 	if(fcgiTestSocket!=null) try { fcgiTestSocket.close(); fcgiTestSocket=null;} catch (Exception e) {/*ignore*/}
-    }	    
+    }	  
+    /** 
+     * Return the channel name 
+     * @return the channel name
+     * 
+     */
+    public String toString() {
+	return "ChannelName@127.0.0.1:" + port;
+    }
 }

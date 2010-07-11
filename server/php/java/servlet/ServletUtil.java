@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -19,7 +20,6 @@ import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
-import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.WriterOutputStream;
 
 /*
@@ -50,10 +50,6 @@ import php.java.bridge.http.WriterOutputStream;
  *
  */
 public class ServletUtil {
-
-    /** Only for internal use */
-    public static final String HOST_ADDR_ATTRIBUTE = ServletUtil.class.getName()+".HOST_ADDR";
-
     private ServletUtil() {}
     
    /**
@@ -135,17 +131,6 @@ public class ServletUtil {
         }
     }
 
-    /** Only for internal use */
-    public static ContextServer getContextServer(ServletContext context, boolean promiscuous) {
-        ContextServer server = (ContextServer)context.getAttribute(ContextServer.ROOT_CONTEXT_SERVER_ATTRIBUTE);
-        if (server == null) {
-            String servletContextName=getRealPath(context, "");
-            if(servletContextName==null) servletContextName="";
-            server = new ContextServer(servletContextName, promiscuous);
-            context.setAttribute(ContextServer.ROOT_CONTEXT_SERVER_ATTRIBUTE, server);
-        }
-        return server;
-    }
     /**
      * Return an mbean property.
      * Example: <code>Util.getMBeanProperty("*:type=ThreadPool,name=http*", "maxThreads")</code> or 
@@ -187,4 +172,29 @@ public class ServletUtil {
 	}
 	return 0;
    }
+
+    public static String getRedirectString(String webPath, String socketName, boolean isSecure) {
+        try {
+            StringBuffer buf = new StringBuffer();
+            buf.append(socketName);
+            buf.append("/");
+            buf.append(webPath);
+            URI uri = new URI(isSecure?"s:127.0.0.1":"h:127.0.0.1", buf.toString(), null);
+            return (uri.toASCIIString()+".phpjavabridge");
+        } catch (Exception e) {
+            Util.printStackTrace(e);
+        }
+	StringBuffer buf = new StringBuffer();
+	if(!isSecure)
+		buf.append("h:");
+	else
+		buf.append("s:");
+	buf.append("127.0.0.1");
+	buf.append(":");
+	buf.append(socketName); 
+	buf.append('/');
+	buf.append(webPath);
+	buf.append(".phpjavabridge");
+	return buf.toString();
+    }
 }

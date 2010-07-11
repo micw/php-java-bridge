@@ -10,7 +10,6 @@ import java.util.Map;
 import php.java.bridge.ILogger;
 import php.java.bridge.Util;
 import php.java.bridge.Util.Process;
-import php.java.servlet.ServletUtil;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -39,7 +38,6 @@ import php.java.servlet.ServletUtil;
  * @author jostb
  */
 public abstract class FCGIConnectionFactory {
-    protected String contextPath;
     protected boolean promiscuous;
     protected IFCGIProcessFactory processFactory;
     
@@ -146,13 +144,8 @@ public abstract class FCGIConnectionFactory {
      * For backward compatibility the "JavaBridge" context uses the port 9667 (Linux/Unix) or <code>\\.\pipe\JavaBridge@9667</code> (Windogs).
      * @param contextPath The path of the web context
      */
-    public void initialize(String contextPath) {
-	this.contextPath = contextPath;
-	if(ServletUtil.isJavaBridgeWc(contextPath)) {
-	    setDefaultPort();
-	} else {
-	    setDynamicPort();
-	}
+    public void initialize() {
+	setDynamicPort();
     }
     protected abstract void setDynamicPort();
     protected abstract void setDefaultPort();
@@ -181,13 +174,5 @@ public abstract class FCGIConnectionFactory {
 	else 
 	    return new NPChannelFactory(processFactory);
     }
-	
-    /** 
-     * Return the channel name 
-     * @return the channel name
-     * 
-     */
-    public String toString() {
-	return "ChannelName@" + contextPath==null ? "<not initialized>" : contextPath;
-    }
+    public abstract String toString();
 }

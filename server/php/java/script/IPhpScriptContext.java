@@ -56,5 +56,5 @@ public interface IPhpScriptContext extends IManaged, Invocable, IContext, Script
     public Continuation getContinuation();
 
     /* FIXME */
-    public Continuation createContinuation(Reader reader, Map env, OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy result, ILogger logger);
+    public Continuation createContinuation(Reader reader, Map env, OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy result, ILogger logger, boolean isCompiled);
 }

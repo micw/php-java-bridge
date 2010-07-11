@@ -26,10 +26,8 @@ package php.java.script;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.Reader;
 import java.util.Map;
 
-import php.java.bridge.ILogger;
 import php.java.bridge.Util;
 import php.java.bridge.http.HeaderParser;
 
@@ -48,7 +46,7 @@ public abstract class Continuation implements IContinuation, Runnable {
 	
     protected Map env;
     protected OutputStream out, err;
-    protected Reader reader;
+ //   protected Reader reader;
     protected HeaderParser headerParser;
     protected ResultProxy resultProxy;
     
@@ -90,8 +88,7 @@ public abstract class Continuation implements IContinuation, Runnable {
 	    notify();
 	}
     }
-    protected Continuation(Reader reader, Map env, OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy resultProxy, ILogger logger) {
-    	this.reader = reader;
+    protected Continuation(Map env, OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy resultProxy) {
 	this.env = env;
 	this.out = out;
 	this.err = err;

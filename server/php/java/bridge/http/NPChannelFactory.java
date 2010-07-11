@@ -144,4 +144,12 @@ public class NPChannelFactory extends FCGIConnectionFactory {
     public String getPath() {
 	return raPath;
     }
+    /** 
+     * Return the channel name 
+     * @return the channel name
+     * 
+     */
+    public String toString() {
+	return "ChannelName@" + (getPath()==null ? "<not initialized>" : getPath());
+    }
 }

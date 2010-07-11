@@ -4,7 +4,6 @@ package php.java.servlet;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.net.URI;
 import java.util.List;
 
 import javax.servlet.ServletContext;
@@ -132,7 +131,7 @@ public class HttpContext extends php.java.bridge.http.Context {
         * @param ctx The ServletContext
         */
        public static void handleManaged(Object closeable, ServletContext ctx) {
-	 List list = (List) ctx.getAttribute(ContextLoaderListener.CLOSEABLES);
+	 List list = (List) ContextLoaderListener.getContextLoaderListener(ctx).getCloseables();
 	 list.add(closeable);
        }
        /**{@inheritDoc}*/
@@ -150,13 +149,14 @@ public class HttpContext extends php.java.bridge.http.Context {
         * @param path the path
         * @param ctx the servlet context 
         * @return the real path
+        * @deprecated Use {@link php.java.servlet.ServletUtil#getRealPath(ServletContext, String)}
         */
        public static String getRealPathInternal(String path, ServletContext ctx) {
 	   return ServletUtil.getRealPath(ctx, path);
        }
        /**{@inheritDoc}*/
        public String getRealPath(String path) {
-   	return getRealPathInternal(path, context);
+   	return ServletUtil.getRealPath(context, path);
        }
        /**{@inheritDoc}*/
        public String getRedirectString() {
@@ -164,28 +164,7 @@ public class HttpContext extends php.java.bridge.http.Context {
        }
        /**{@inheritDoc}*/
        public String getRedirectString(String webPath) {
-           try {
-               StringBuffer buf = new StringBuffer();
-               buf.append(getSocketName());
-               buf.append("/");
-               buf.append(webPath);
-               URI uri = new URI(request.isSecure()?"s:127.0.0.1":"h:127.0.0.1", buf.toString(), null);
-               return (uri.toASCIIString()+".phpjavabridge");
-           } catch (Exception e) {
-               Util.printStackTrace(e);
-           }
-   	StringBuffer buf = new StringBuffer();
-   	if(!request.isSecure())
-   		buf.append("h:");
-   	else
-   		buf.append("s:");
-   	buf.append("127.0.0.1");
-   	buf.append(":");
-   	buf.append(getSocketName()); 
-   	buf.append('/');
-   	buf.append(webPath);
-   	buf.append(".phpjavabridge");
-   	return buf.toString();
+	  return ServletUtil.getRedirectString(webPath, getSocketName(), request.isSecure());
        }
 
        /**{@inheritDoc}*/

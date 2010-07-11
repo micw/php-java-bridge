@@ -1,13 +1,6 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 
-package php.java.script;
-
-import java.io.OutputStream;
-import java.io.Reader;
-import java.util.Map;
-
-import php.java.bridge.ILogger;
-import php.java.bridge.http.HeaderParser;
+package php.java.script.servlet;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -31,27 +24,38 @@ import php.java.bridge.http.HeaderParser;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.io.OutputStream;
+import java.io.PrintWriter;
 
 /**
- * A decorator for compiled script engines. 
- * Only for internal use.
+ * A PrintWriter backed by an OutputStream.
  * @author jostb
  *
  */
-public class PhpCompiledScriptContext extends PhpScriptContextDecorator {
+public class PhpScriptWriter extends PrintWriter {
 
+    OutputStream out;
+	
     /**
-     * Create a new PhpCompiledScriptContext using an existing
-     * PhpScriptContext
-     * @param ctx the script context to be decorated
+     * Create a new PhpScriptWriter.
+     * @param out The OutputStream
      */
-    public PhpCompiledScriptContext(IPhpScriptContext ctx) {
-	super(ctx);
+    public PhpScriptWriter(OutputStream out) {
+        super(out);
+        if(out==null) throw new NullPointerException("out");
+	this.out = out;
     }
+	
+    /**
+     * Returns the OutputStream.
+     * @return The OutputStream.
+     */
+    public OutputStream getOutputStream() {
+	return out;
+    }
+    
     /**{@inheritDoc}*/
-    public Continuation createContinuation(Reader reader, Map env,
-            OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy result,
-            ILogger logger, boolean isCompiled) {
-    		return new FastCGIProxy(reader, env, out,  err, headerParser, result, logger); 
+   public void close () {
+	flush ();
     }
 }

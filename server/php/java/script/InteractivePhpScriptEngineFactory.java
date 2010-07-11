@@ -37,8 +37,15 @@ public class InteractivePhpScriptEngineFactory extends InvocablePhpScriptEngineF
         }
 
 	public ScriptEngine create () {
-	    if (hasCloseable) return new CloseablePhpScriptEngineDecorator(new InteractivePhpScriptEngine(InteractivePhpScriptEngineFactory.this));
-	    else return new InteractivePhpScriptEngine(InteractivePhpScriptEngineFactory.this);
+	    InteractivePhpScriptEngine engine = new InteractivePhpScriptEngine(InteractivePhpScriptEngineFactory.this);
+	    if (hasCloseable) {
+		IPhpScriptEngine decorator = new CloseableInvocablePhpScriptEngineDecorator(engine);
+		engine.setEngine(decorator);
+		return decorator;
+	    }
+	    else {
+		return engine;
+	    }
 	}
     }
     

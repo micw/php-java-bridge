@@ -1,13 +1,6 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 
-package php.java.script;
-
-import java.io.OutputStream;
-import java.io.Reader;
-import java.util.Map;
-
-import php.java.bridge.ILogger;
-import php.java.bridge.http.HeaderParser;
+package php.java.script.servlet;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -31,27 +24,39 @@ import php.java.bridge.http.HeaderParser;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.io.IOException;
+import java.io.OutputStream;
+
+import php.java.bridge.ILogger;
+import php.java.bridge.NotImplementedException;
 
 /**
- * A decorator for compiled script engines. 
- * Only for internal use.
- * @author jostb
+ * A PrintWriter which uses the JavaBridge logger.
  *
  */
-public class PhpCompiledScriptContext extends PhpScriptContextDecorator {
+public class PhpScriptLogWriter extends PhpScriptWriter {
 
-    /**
-     * Create a new PhpCompiledScriptContext using an existing
-     * PhpScriptContext
-     * @param ctx the script context to be decorated
-     */
-    public PhpCompiledScriptContext(IPhpScriptContext ctx) {
-	super(ctx);
+    private PhpScriptLogWriter(OutputStream out) {
+	super(out);
     }
-    /**{@inheritDoc}*/
-    public Continuation createContinuation(Reader reader, Map env,
-            OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy result,
-            ILogger logger, boolean isCompiled) {
-    		return new FastCGIProxy(reader, env, out,  err, headerParser, result, logger); 
+    /**
+     * Get a new log writer
+     * @param logger The logger
+     * @return The log writer
+     */
+    public static final PhpScriptLogWriter getWriter (ILogger logger) {
+	    return new PhpScriptLogWriter (new LogOutputStream(logger));
+    }
+    static class LogOutputStream extends OutputStream {
+	private ILogger logger;
+	public LogOutputStream(ILogger logger) {
+	    this.logger = logger;
+	}
+	    public void write(int b) throws IOException {
+		throw new NotImplementedException();
+	    }
+	    public void write(byte b[], int off, int len) throws IOException {
+		logger.log(ILogger.INFO, new String(b, off, len));
+	    }
     }
 }

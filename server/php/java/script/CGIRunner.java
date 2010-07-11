@@ -51,11 +51,13 @@ import php.java.bridge.http.OutputStreamFactory;
  */
 
 public class CGIRunner extends Continuation {
-	
+
+    protected Reader reader;
     protected CGIRunner(Reader reader, Map env, OutputStream out,
             OutputStream err, HeaderParser headerParser,
             ResultProxy resultProxy, ILogger logger) {
-	super(reader, env, out, err, headerParser, resultProxy, logger);
+	super(env, out, err, headerParser, resultProxy);
+	this.reader = reader;
     }
 
     private Writer writer;

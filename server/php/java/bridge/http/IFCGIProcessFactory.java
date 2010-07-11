@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import php.java.script.FastCGIProxy;
 import php.java.servlet.fastcgi.FastCGIServlet;
 
 /*
