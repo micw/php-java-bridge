@@ -24,6 +24,7 @@ package php.java.script;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.util.Collections;
@@ -34,8 +35,10 @@ import javax.script.ScriptContext;
 import php.java.bridge.ILogger;
 import php.java.bridge.JavaBridgeRunner;
 import php.java.bridge.Util;
+import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.HeaderParser;
 import php.java.bridge.http.IContext;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
  * This class implements a simple script context for PHP. It starts a standalone 
@@ -52,17 +55,6 @@ public final class PhpScriptContext extends AbstractPhpScriptContext implements 
     public PhpScriptContext(ScriptContext ctx) {
 	super(ctx);
     }
-    
-    static JavaBridgeRunner bridgeRunner = null;
-
-    static {
-	try {
-	    bridgeRunner = JavaBridgeRunner.getRequiredInstance();
-	} catch (Exception e) {
-	    Util.printStackTrace(e);
-	}
-    }
-
     /**{@inheritDoc}*/
     public Object init(Object callable) throws Exception {
 	return php.java.bridge.http.Context.getManageable(callable);
@@ -142,20 +134,34 @@ public final class PhpScriptContext extends AbstractPhpScriptContext implements 
 		else
     			return new HttpProxy(reader, env, out,  err, headerParser, result, logger); 
     }
+    private static JavaBridgeRunner httpServer;
+    private static synchronized final JavaBridgeRunner getHttpServer() {
+	if (httpServer!=null) return httpServer;
+	try {
+	    return httpServer = JavaBridgeRunner.getRequiredInstance();
+        } catch (IOException e) {
+            Util.printStackTrace(e);
+            return null;
+        }
+    }
     /**{@inheritDoc}*/
     public String getSocketName() {
-	return PhpScriptContext.bridgeRunner.getSocket().getSocketName();
+	return getHttpServer().getSocket().getSocketName();
     }
-    /**{@inheritDoc}*/
+    /**@deprecated*/
     public String getRedirectString() {
-	return getRedirectString("/JavaBridge");
+	throw new NotImplementedException();
     }
-    /**{@inheritDoc}*/
+    /**@deprecated*/
     public String getRedirectString(String webPath) {
-	return Util.getSimpleRedirectString(webPath, getSocketName(), false);
+	throw new NotImplementedException();
     }
     /**{@inheritDoc}*/
     public String getRedirectURL(String webPath) {
 	return "http://127.0.0.1:"+getSocketName()+webPath;
+    }
+    /**{@inheritDoc}*/
+    public ContextServer getContextServer() {
+	return getHttpServer().getContextServer();
     }
 }

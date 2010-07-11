@@ -83,7 +83,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	buf.append(", max=");
 	buf.append(maxKeepAliveRequests);
 	// use redirect if maxKeepAliveRequests and keepAliveTimeout are not set to infinity
-	promiscuous = !(maxKeepAliveRequests != -1 && keepAliveTimeout == -1);
+	promiscuous = true;
 	keepAliveParam = buf.toString();
 	
  	String servletContextName=ServletUtil.getRealPath(config.getServletContext(), "");

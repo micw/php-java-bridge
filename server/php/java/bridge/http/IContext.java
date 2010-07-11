@@ -228,23 +228,14 @@ public interface IContext {
         * back-end URL in the Java.inc
         * @param webPath Usually request.getContextPath()+request.getServletPath()
         * @return the redirect string
-        * @see #getRedirectString(String)
         */
        public String getRedirectURL(String webPath);
        /**
-        * Return the redirect string, for example h:localhost:8080//webPath or s:localhost:8080//webPath
-        * (note the two slashes before webPath).
-        * Used by compiling script engines via {@link php.java.bridge.Util#X_JAVABRIDGE_OVERRIDE_HOSTS} and
-        * {@link php.java.bridge.Util#X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT} to override the
-        * JAVA_HOSTS setting in Java.inc, because they cannot hard-code the
-        * require_once("http://back-end/.../Java.inc").
-        * @param webPath Usually request.getContextPath()+request.getServletPath()
-        * @return the redirect string
-        * @see #getRedirectURL(String)
-        */
+	* @deprecated Use {@link #getRedirectURL(String)}
+       */
        public String getRedirectString(String webPath);
        /**
-	* @deprecated Use {@link #getRedirectString(String)}
+	* @deprecated Use {@link #getRedirectURL(String)}
         */
        public String getRedirectString();
 

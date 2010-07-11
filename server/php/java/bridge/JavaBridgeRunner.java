@@ -63,6 +63,7 @@ import php.java.bridge.http.RemoteHttpContextFactory;
 public class JavaBridgeRunner extends HttpServer {
 
     protected static JavaBridgeRunner runner;
+    protected ContextServer contextServer;
 
     protected JavaBridgeRunner(String serverPort, boolean isSecure) throws IOException {
 	super(serverPort, isSecure);
@@ -78,6 +79,13 @@ public class JavaBridgeRunner extends HttpServer {
      */
     protected JavaBridgeRunner() throws IOException {
 	this(null);
+    }
+    /**
+     * Return the ContextServer
+     * @return the ContextServer
+     */
+    public ContextServer getContextServer() {
+	return contextServer;
     }
     /**
      * Return a instance.
@@ -142,8 +150,6 @@ public class JavaBridgeRunner extends HttpServer {
 	return runner;
     }
     
-    /** Only for internal use */
-    public static ContextServer contextServer = null;
 
     /**
      * Create a server socket.

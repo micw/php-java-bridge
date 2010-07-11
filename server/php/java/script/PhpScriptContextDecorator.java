@@ -33,7 +33,9 @@ import java.util.Map;
 import javax.script.Bindings;
 
 import php.java.bridge.ILogger;
+import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.HeaderParser;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
  * Abstract class for IPhpScriptContexts. The abstract class itself provides default methods that pass 
@@ -197,13 +199,13 @@ public abstract class PhpScriptContextDecorator implements IPhpScriptContext {
             ResultProxy result, ILogger logger, boolean isCompiled) {
 	return ctx.createContinuation(reader, env, out, err, headerParser, result, logger, isCompiled);
     }
-    /**{@inheritDoc}*/
+    /**@deprecated*/
     public String getRedirectString(String webPath) {
-	return ctx.getRedirectString(webPath);
+	throw new NotImplementedException();
     }
-    /**{@inheritDoc}*/
+    /**@deprecated*/
     public String getRedirectString() {
-	return getRedirectString("/JavaBridge");
+	throw new NotImplementedException();
     }
     /**{@inheritDoc}*/
     public String getSocketName() {
@@ -212,5 +214,9 @@ public abstract class PhpScriptContextDecorator implements IPhpScriptContext {
     /**{@inheritDoc}*/
     public String getRedirectURL(String webPath) {
 	return ctx.getRedirectURL(webPath);
+    }
+    /**{@inheritDoc}*/
+    public ContextServer getContextServer() {
+	return ctx.getContextServer();
     }
 }

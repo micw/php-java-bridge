@@ -33,6 +33,7 @@ import javax.script.ScriptContext;
 import php.java.bridge.ILogger;
 import php.java.bridge.IManaged;
 import php.java.bridge.Invocable;
+import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.HeaderParser;
 import php.java.bridge.http.IContext;
 
@@ -55,6 +56,22 @@ public interface IPhpScriptContext extends IManaged, Invocable, IContext, Script
      */
     public Continuation getContinuation();
 
-    /* FIXME */
+    /**
+     * Create a continuation
+     * @param reader the script reader
+     * @param env the environment passed to php
+     * @param out the fcgi output stream
+     * @param err the fcgi error stream
+     * @param headerParser fcgi header parser
+     * @param result the result proxy
+     * @param logger the logger
+     * @param isCompiled create a continuation for a compiled or non-compiled script engine
+     * @return the Continuation
+     */
     public Continuation createContinuation(Reader reader, Map env, OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy result, ILogger logger, boolean isCompiled);
+    /**
+     * Get the context server associated with this context, usually a HttpServer (JavaBridgeRunner) or a ContextServer from a ContextLoaderListener
+     * @return the ContextServer
+     */
+    public ContextServer getContextServer();
 }

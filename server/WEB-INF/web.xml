@@ -36,47 +36,6 @@
     <servlet>
         <servlet-name>PhpCGIServlet</servlet-name>
         <servlet-class>php.java.servlet.fastcgi.FastCGIServlet</servlet-class>
-
-         <!-- Your php binary. Default is /usr/bin/php-cgi or -->
-         <!-- c:/Program Files/PHP/php-cgi.exe  or a binary from the system PATH -->
-        <!-- 
-         <init-param>
-           <param-name>php_exec</param-name>
-           <param-value>php-cgi</param-value>
-         </init-param>
-        -->
-        
-        <!-- the following line conveniently adds require_once("java/Java.inc") -->
-        <!-- to each PHP script. Remove the line, if you don't need this feature. -->
-        <init-param><param-name>php_include_java</param-name><param-value>On</param-value></init-param>
-
-         <!-- Prefer the system php-cgi executable (see DEFAULT_CGI_LOCATIONS) -->
-         <!-- over a local WEB-INF/cgi/php-cgi-xxx-yyy[.sh|.exe]? -->
-         <!-- Default is to try a local php-cgi executable first. -->
-         <init-param>
-           <param-name>prefer_system_php_exec</param-name>
-           <param-value>On</param-value>
-         </init-param>
-
-        <!-- The number of PHP processes waiting in the FastCGI pool -->
-        <!-- Default is 5. -->
-        <!-- 
-         <init-param>
-           <param-name>php_fcgi_children</param-name>
-           <param-value>5</param-value>
-         </init-param>
-        -->
-
-        <!-- Automatically include java/JavaProxy.php  -->
-        <!-- Switch this off if you don't use Java in all of your scripts -->
-        <!-- Default is Off. -->
-        <!-- 
-         <init-param>
-           <param-name>php_include_java</param-name>
-           <param-value>On</param-value>
-         </init-param>
-        -->
-
         <load-on-startup>0</load-on-startup>
     </servlet>
 

@@ -27,15 +27,12 @@ package php.java.script;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringReader;
 import java.lang.reflect.Field;
-import java.security.DigestOutputStream;
-import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -51,7 +48,6 @@ import javax.script.ScriptEngineFactory;
 import javax.script.ScriptException;
 import javax.script.SimpleBindings;
 
-import php.java.bridge.JavaBridgeRunner;
 import php.java.bridge.ThreadPool;
 import php.java.bridge.Util;
 import php.java.bridge.http.AbstractChannelName;
@@ -136,18 +132,12 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */
 	env.put(Util.X_JAVABRIDGE_CONTEXT, ctx.getId());
-	
-	/* the client should connect back to us */
-	String redirect = ((IContext)getContext()).getRedirectString("/JavaBridge");
-	env.put(Util.X_JAVABRIDGE_OVERRIDE_HOSTS, redirect);
-        // workaround for a problem in php (it confuses the OVERRIDE_HOSTS from the environment with OVERRIDE_HOSTS from the request meta-data 
-	env.put(Util.X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT, redirect);
     }
     protected void addNewContextFactory() {
 	ctx = PhpScriptContextFactory.addNew((IContext)getContext());
     }
     protected ContextServer getContextServer() {
-	return JavaBridgeRunner.contextServer;
+	return ((IPhpScriptContext)getContext()).getContextServer();
     }
     /**
      * Create a new context ID and a environment map which we send to the client.
@@ -186,52 +176,12 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
 	return doEvalCompiledPhp(reader, getContext());
     }
     
-    private static final byte[][] HEX_BYTES = getHexBytes();
-    private static final byte[][] getHexBytes() {
-	byte[][] bytes = new byte[256][2];
-	for (int i=0; i<16; i++) {
-	    for (int j=0; j<16; j++) {
-		int n = (i<<4)+j;
-		bytes[n][0] = Util.HEX_DIGITS[i];
-		bytes[n][1] = Util.HEX_DIGITS[j];
-	    }
-	}
-	return bytes;
-    }
-    private static final String createUniqPhpFileName(Reader reader) {
-	try {
-	    MessageDigest md5 = MessageDigest.getInstance("MD5");
-	    ByteArrayOutputStream bout = new ByteArrayOutputStream();
-	    OutputStream hout = new FilterOutputStream(bout) {
-		public void write(int b) throws IOException {
-                    out.write(HEX_BYTES[b]);
-                }
-	    };
-	    OutputStream out = new DigestOutputStream(hout, md5);
-	    OutputStreamWriter writer = new OutputStreamWriter(out);
-	    char[] buf = new char[Util.BUF_SIZE];
-	    int c;
-	    while((c = reader.read(buf))>0) {
-		writer.write(buf, 0, c);
-	    }
-	    reader.reset();
-	    writer.close();
-	    StringBuilder b = new StringBuilder(bout.toString());
-	    b.append(".php");
-	    return b.toString();
-	} catch (Throwable e) {
-	    throwNoOutputFile();
-	    return null;
-	}
-    }
-   
     protected void compilePhp(Reader reader, ScriptContext context) throws IOException {
 	this.isCompiled = true;
 	setContext(context);
-  	setNewContextFactory();
   	
   	if (compilerOutputFile == null) {
-  	    compilerOutputFile = new File(Util.TMPDIR, createUniqPhpFileName(reader));
+  	    compilerOutputFile = File.createTempFile("compiled-", ".php", null);
   	}
 	FileWriter writer = new FileWriter(compilerOutputFile);
 	char[] buf = new char[Util.BUF_SIZE];

@@ -213,9 +213,9 @@ public class Standalone {
 	try {
 	    runner = Util.classForName("php.java.script.JavaBridgeScriptRunner");
 	    Method m = runner.getMethod("getRequiredInstance", new Class[]{String.class, Boolean.TYPE});
-	    r = (JavaBridgeRunner)m.invoke(runner, new Object[]{serverPort, isSecure});
+	    r = (JavaBridgeRunner)m.invoke(runner, new Object[]{serverPort, new Boolean(isSecure)});
         } catch (Throwable e) {
-            r = php.java.script.JavaBridgeScriptRunner.getRequiredInstance(serverPort, isSecure);
+            r = JavaBridgeRunner.getRequiredInstance(serverPort, isSecure);
         }
 	r.waitFor();
 	r.destroy();

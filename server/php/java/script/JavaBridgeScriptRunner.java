@@ -154,8 +154,9 @@ public class JavaBridgeScriptRunner extends JavaBridgeRunner {
 
 	    if(engine==null) return false;
 	    ByteArrayOutputStream xout = new ByteArrayOutputStream();
-	    ScriptContext ctx = engine.getContext();
 	    PrintWriter writer = new PrintWriter(new OutputStreamWriter(xout, Util.UTF8));
+	    ScriptContext ctx = engine.getContext();
+	    ctx = new PhpJavaBridgeRunnerScriptContext(ctx, this);
 	    ctx.setWriter(writer);
 	    ctx.setErrorWriter(writer);
 	    if (isSecure) engine.setContext(new PhpSecureScriptContext(ctx));

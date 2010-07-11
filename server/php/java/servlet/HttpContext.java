@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
 import php.java.bridge.http.IContext;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -158,13 +159,13 @@ public class HttpContext extends php.java.bridge.http.Context {
        public String getRealPath(String path) {
    	return ServletUtil.getRealPath(context, path);
        }
-       /**{@inheritDoc}*/
+       /**@deprecated*/
        public String getRedirectString() {
-   	return getRedirectString(request.getContextPath()+request.getServletPath());
+	   throw new NotImplementedException();
        }
-       /**{@inheritDoc}*/
+       /**@deprecated*/
        public String getRedirectString(String webPath) {
-	  return ServletUtil.getRedirectString(webPath, getSocketName(), request.isSecure());
+	   throw new NotImplementedException();
        }
 
        /**{@inheritDoc}*/

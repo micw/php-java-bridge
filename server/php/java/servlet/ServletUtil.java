@@ -8,7 +8,6 @@ import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -172,29 +171,4 @@ public class ServletUtil {
 	}
 	return 0;
    }
-
-    public static String getRedirectString(String webPath, String socketName, boolean isSecure) {
-        try {
-            StringBuffer buf = new StringBuffer();
-            buf.append(socketName);
-            buf.append("/");
-            buf.append(webPath);
-            URI uri = new URI(isSecure?"s:127.0.0.1":"h:127.0.0.1", buf.toString(), null);
-            return (uri.toASCIIString()+".phpjavabridge");
-        } catch (Exception e) {
-            Util.printStackTrace(e);
-        }
-	StringBuffer buf = new StringBuffer();
-	if(!isSecure)
-		buf.append("h:");
-	else
-		buf.append("s:");
-	buf.append("127.0.0.1");
-	buf.append(":");
-	buf.append(socketName); 
-	buf.append('/');
-	buf.append(webPath);
-	buf.append(".phpjavabridge");
-	return buf.toString();
-    }
 }

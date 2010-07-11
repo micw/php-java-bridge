@@ -17,6 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 import php.java.bridge.ILogger;
 import php.java.bridge.NotImplementedException;
 import php.java.bridge.Util;
+import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.HeaderParser;
 import php.java.script.Continuation;
 import php.java.script.IPhpScriptContext;
@@ -262,13 +263,13 @@ public class PhpCompiledHttpScriptContext extends PhpScriptContextDecorator {
     public String getRealPath(String path) {
 	return ServletUtil.getRealPath(context, path);
     }
-    /**{@inheritDoc}*/
+    /**@deprecated*/
     public String getRedirectString(String webPath) {
-	return ServletUtil.getRedirectString(webPath, getSocketName(), request.isSecure());
+	throw new NotImplementedException();
     }
-    /**{@inheritDoc}*/
+    /**@deprecated*/
     public String getRedirectString() {
-	return getRedirectString(request.getContextPath()+request.getServletPath());
+	throw new NotImplementedException();
     }
     /**{@inheritDoc}*/
     public String getRedirectURL(String webPath) {
@@ -278,5 +279,9 @@ public class PhpCompiledHttpScriptContext extends PhpScriptContextDecorator {
     /**{@inheritDoc}*/
     public String getSocketName() {
 	return String.valueOf(ServletUtil.getLocalPort(request));
+    }
+    /**{@inheritDoc}*/
+    public ContextServer getContextServer() {
+	return ContextLoaderListener.getContextLoaderListener(context).getContextServer();
     }
 }

@@ -36,13 +36,15 @@
 
   <target name="compile" depends="init,JavaIncJava,JavaProxyPhpJava,PhpDebuggerPHPJava,LauncherUnix,LauncherWindows">
     <javac srcdir="${javaSourceDir}" source="1.4" target="1.4" destdir="${javaClassDir}" debug="true" deprecation="true">
+            <exclude name="php/java/test/**/*.java" />	
       <classpath refid="compilePath" />
     </javac>
   </target>
   <target name="SrcZip" depends="init,JavaBridgeProperties,JavaInc,JavaProxyPhp">
     <zip zipfile="${distDir}/src.zip" compress="true">
       <fileset dir="${javaSourceDir}">
-	<include name="php/java/**/*.java" />	
+    <include name="php/java/**/*.java" />	
+    <exclude name="php/java/test/**/*.java" />	
     <include name="javax/script/*.java" />
 	<include name="php/java/bridge/global.properties" />
 	<include name="WEB-INF/cgi/launcher.c" />

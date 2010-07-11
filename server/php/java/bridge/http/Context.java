@@ -311,13 +311,13 @@ public class Context implements IManaged, Invocable, IContext {
     public String getSocketName() {
 	throw new NotImplementedException("Use the JSR 223 API or a servlet environment instead");
     }
-    /**{@inheritDoc}*/
+    /**@deprecated*/
     public String getRedirectString() {
-	return getRedirectString("/JavaBridge");
+	throw new NotImplementedException();
     }
-    /**{@inheritDoc}*/
+    /**@deprecated*/
     public String getRedirectString(String webPath) {
-	return Util.getSimpleRedirectString(webPath, getSocketName(), false);
+	throw new NotImplementedException();
     }
     /**{@inheritDoc}*/
     public String getRedirectURL(String webPath) {

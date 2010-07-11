@@ -4,6 +4,9 @@ package php.java.script;
 
 import javax.script.ScriptContext;
 
+import php.java.bridge.JavaBridgeRunner;
+import php.java.bridge.http.ContextServer;
+
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
  *
@@ -33,18 +36,24 @@ import javax.script.ScriptContext;
  * @author jostb
  *
  */
-public class PhpSecureScriptContext extends PhpScriptContextDecorator {
+public class PhpJavaBridgeRunnerScriptContext extends PhpScriptContextDecorator {
 
+    protected JavaBridgeRunner httpServer;
     /**
      * Create a new PhpCompiledScriptContext using an existing
      * PhpScriptContext
      * @param ctx the script context to be decorated
      */
-    public PhpSecureScriptContext(ScriptContext ctx) {
+    public PhpJavaBridgeRunnerScriptContext(ScriptContext ctx, JavaBridgeRunner httpServer) {
 	super((IPhpScriptContext)ctx);
+	this.httpServer = httpServer;
     }
     /**{@inheritDoc}*/
-    public String getRedirectURL(String webPath) {
-	return "https://127.0.0.1:"+getSocketName()+webPath;
+    public String getSocketName() {
+	return httpServer.getSocket().getSocketName();
+    }
+    /**{@inheritDoc}*/
+    public ContextServer getContextServer() {
+	return httpServer.getContextServer();
     }
 }
