@@ -188,6 +188,10 @@ public class PhpCompiledHttpScriptContext extends PhpScriptContextDecorator {
 	}
 	return writer;
     }
+    /** {@inheritDoc} */
+    public void setWriter(Writer writer) {
+	super.setWriter(this.writer = writer);
+    }
     protected Writer errorWriter;
     /** {@inheritDoc} */
     public Writer getErrorWriter() {
@@ -200,7 +204,10 @@ public class PhpCompiledHttpScriptContext extends PhpScriptContextDecorator {
 	}
 	return errorWriter;	
     }
-
+    /**{@inheritDoc}*/
+    public void setErrorWriter(Writer errorWriter) {
+	super.setErrorWriter(this.errorWriter = errorWriter);
+    }
     protected Reader reader;
     /**{@inheritDoc}*/
     public Reader getReader() {
@@ -212,6 +219,9 @@ public class PhpCompiledHttpScriptContext extends PhpScriptContextDecorator {
             }
 	}
 	return reader;
+    }
+    public void setReader(Reader reader) {
+	super.setReader(this.reader = reader);
     }
     /**{@inheritDoc}*/
     public Object init(Object callable) throws Exception {

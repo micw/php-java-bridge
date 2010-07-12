@@ -24,15 +24,10 @@ package php.java.script;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+class CloseableInvocablePhpScriptEngine extends InvocablePhpScriptEngine implements java.io.Closeable {
 
-/**
- * A ScriptEngineDecorator implementing the Java 1.5 Closeable interface.
- * @author jostb
- */
-public class CloseablePhpScriptEngineDecorator extends PhpScriptEngineDecorator implements java.io.Closeable {
-
-    /** {@inheritDoc} */
-    public CloseablePhpScriptEngineDecorator(IPhpScriptEngine engine) {
-	super(engine);
+    public CloseableInvocablePhpScriptEngine(
+            InvocablePhpScriptEngineFactory invocablePhpScriptEngineFactory) {
+	super(invocablePhpScriptEngineFactory);
     }
 }

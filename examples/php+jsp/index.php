@@ -93,7 +93,7 @@
 </tr>
 
 <tr VALIGN=TOP>
-<td WIDTH="25%">Calling a function on a remote PHP application server.</td>
+<td WIDTH="25%">Calling a PHP function.</td>
 
 <td WIDTH="25%"><a href="jsp%2Bphp.jsp">Execute</a></td>
 

@@ -1,5 +1,7 @@
 /*-*- mode: Java; tab-width:8 -*-*/
+
 package php.java.script;
+
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -22,45 +24,7 @@ package php.java.script;
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-
-import javax.script.ScriptEngine;
-
 /**
- * Create a standalone interactive PHP script engines.
+ * A cloneable script interface
  */
-
-public class InteractivePhpScriptEngineFactory extends InvocablePhpScriptEngineFactory {
-
-    protected class Factory extends PhpScriptEngineFactory.Factory {
-	public Factory(boolean hasCloseable) {
-	    super(hasCloseable);
-        }
-
-	public ScriptEngine create () {
-	    if (hasCloseable) {
-		return new CloseableInteractivePhpScriptEngine(InteractivePhpScriptEngineFactory.this);
-	    }
-	    else {
-		return new InteractivePhpScriptEngine(InteractivePhpScriptEngineFactory.this);
-	    }
-	}
-    }
-    
-    /**
-     * Create a new EngineFactory
-     */
-    public InteractivePhpScriptEngineFactory () {
-	try {
-	    Class.forName("java.io.Closeable");
-	    factory = new Factory(true);
-	} catch (ClassNotFoundException e) {
-	    factory = new Factory(false);
-	}
-    }
-
-
-  /**{@inheritDoc}*/
-  public String getLanguageName() {
-    return "php-interactive";
-  }
-}
+public interface CloneableScript extends java.security.cert.CertStoreParameters {}

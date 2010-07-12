@@ -43,7 +43,6 @@ import javax.script.Bindings;
 import javax.script.Compilable;
 import javax.script.CompiledScript;
 import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptException;
 import javax.script.SimpleBindings;
@@ -64,9 +63,6 @@ import php.java.bridge.http.WriterOutputStream;
  */
 abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements IPhpScriptEngine, Compilable, java.io.FileFilter {
 
-    /** The current script engine or its decorator. Used by compileable */
-    protected ScriptEngine thiz;
-	
     /**
      * The allocated script
      */
@@ -105,7 +101,6 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
      * Create a new ScriptEngine with a default context.
      */
     public AbstractPhpScriptEngine() {
-	this.setEngine (this);
     }
 
     /**
@@ -116,13 +111,6 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
     public AbstractPhpScriptEngine(PhpScriptEngineFactory factory) {
         this();
         this.factory = factory;
-    }
-    /**
-     * Set the current script engine
-     * @param engine this or its decorator
-     */
-    public void setEngine(IPhpScriptEngine engine) {
-	this.thiz = engine;
     }
     /**
      * Set the context id (X_JAVABRIDGE_CONTEXT) and the override flag (X_JAVABRIDGE_OVERRIDE_HOSTS) into env
@@ -193,8 +181,6 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
 		writer.close();
 	} finally {
 	    localReader.close();
-            // release the engine, so that any error reported by the script can trigger a Java exception
-            release();
 	}
     }
     
@@ -341,7 +327,7 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
     static final void throwNoOutputFile() {
         throw new IllegalStateException("No compilation output file has been set!");
     }
-    private static final Reader DUMMY_READER = new Reader() {
+    static final Reader DUMMY_READER = new Reader() {
 	/** {@inheritDoc} */
         public void close() throws IOException {
             throwNoOutputFile();
@@ -372,25 +358,12 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
     		"if (!isset($argc)) $argc = count($argv);"+
     		"$_SERVER['argv'] = $argv;"+
     		"?>");
-       
+    
     /** {@inheritDoc} */
     public CompiledScript compile(final Reader reader) throws ScriptException {
 	try {
 	    compilePhp(reader, getContext());
-	    return new CompiledScript() {
-		/** {@inheritDoc} */
-		public Object eval(ScriptContext context) throws ScriptException {
-		    try {
-			return AbstractPhpScriptEngine.this.evalCompiledPhp(DUMMY_READER, context);
-		    } catch (Exception e) {
-			throw new ScriptException(e);
-		    }
-		}
-		/** {@inheritDoc} */
-		public ScriptEngine getEngine() {
-		    return thiz;
-		}
-	    };
+	    return new CompiledPhpScript(this);
         } catch (IOException e) {
             throw new ScriptException(e);
         }
@@ -442,5 +415,13 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
 
     protected String getStandardHeader(String filePath) throws IOException {
         return filePath == null ? getEmbeddedStandardHeader(filePath):getSimpleStandardHeader(filePath);
+    }
+    
+    public Object clone() {
+	AbstractPhpScriptEngine other = (AbstractPhpScriptEngine) getFactory().getScriptEngine();
+	other.setContext(getContext());
+	other.isCompiled = isCompiled;
+	other.compilerOutputFile = compilerOutputFile;
+	return other;
     }
 }

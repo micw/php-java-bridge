@@ -2,7 +2,9 @@
 
 package php.java.script;
 
-import javax.script.Invocable;
+import javax.script.CompiledScript;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
 /*
@@ -26,38 +28,36 @@ import javax.script.ScriptException;
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-
-
 /**
- * A ScriptEngineDecorator implementing the Java 1.5 Closeable and Invocable interface.
- * @author jostb
+ * A cloneable CompiledScript
  */
-public class CloseableInvocablePhpScriptEngineDecorator extends CloseablePhpScriptEngineDecorator implements Invocable {
-
-    /** {@inheritDoc} */
-    public CloseableInvocablePhpScriptEngineDecorator(IPhpScriptEngine engine) {
-	super(engine);
+public class CompiledPhpScript extends CompiledScript implements CloneableScript {
+    /**
+     * 
+     */
+    private final AbstractPhpScriptEngine abstractPhpScriptEngine;
+    private AbstractPhpScriptEngine scriptEngine;
+    protected CompiledPhpScript(AbstractPhpScriptEngine abstractPhpScriptEngine) {
+        super();
+        this.abstractPhpScriptEngine = abstractPhpScriptEngine;
+        this.scriptEngine = this.abstractPhpScriptEngine;
     }
-
     /** {@inheritDoc} */
-    public Object getInterface(Object thiz, Class clasz) {
-	return ((Invocable)engine).getInterface(thiz, clasz);
+    public Object eval(ScriptContext context) throws ScriptException {
+        try {
+    	return scriptEngine.evalCompiledPhp(AbstractPhpScriptEngine.DUMMY_READER, context);
+        } catch (Exception e) {
+    	throw new ScriptException(e);
+        }
     }
-
     /** {@inheritDoc} */
-    public Object getInterface(Class clasz) {
-	return ((Invocable)engine).getInterface(clasz);
+    public ScriptEngine getEngine() {
+        return scriptEngine;
     }
-
     /** {@inheritDoc} */
-    public Object invokeFunction(String methodName, Object[] args)
-            throws ScriptException, NoSuchMethodException {
-	return ((Invocable)engine).invokeFunction(methodName, args);
-    }
-
-    /** {@inheritDoc} */
-    public Object invokeMethod(Object thiz, String methodName, Object[] args)
-            throws ScriptException, NoSuchMethodException {
-	return ((Invocable)engine).invokeMethod(thiz, methodName, args);
+    public Object clone() {
+        CompiledPhpScript other = new CompiledPhpScript(this.abstractPhpScriptEngine);
+        other.scriptEngine = (AbstractPhpScriptEngine) scriptEngine.clone();
+        return other;
     }
 }

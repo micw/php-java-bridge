@@ -1,4 +1,5 @@
 /*-*- mode: Java; tab-width:8 -*-*/
+
 package php.java.script;
 
 /*
@@ -23,44 +24,11 @@ package php.java.script;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import javax.script.ScriptEngine;
+class CloseablePhpScriptEngine extends PhpScriptEngine {
 
-/**
- * Create a standalone interactive PHP script engines.
- */
-
-public class InteractivePhpScriptEngineFactory extends InvocablePhpScriptEngineFactory {
-
-    protected class Factory extends PhpScriptEngineFactory.Factory {
-	public Factory(boolean hasCloseable) {
-	    super(hasCloseable);
-        }
-
-	public ScriptEngine create () {
-	    if (hasCloseable) {
-		return new CloseableInteractivePhpScriptEngine(InteractivePhpScriptEngineFactory.this);
-	    }
-	    else {
-		return new InteractivePhpScriptEngine(InteractivePhpScriptEngineFactory.this);
-	    }
-	}
-    }
-    
-    /**
-     * Create a new EngineFactory
-     */
-    public InteractivePhpScriptEngineFactory () {
-	try {
-	    Class.forName("java.io.Closeable");
-	    factory = new Factory(true);
-	} catch (ClassNotFoundException e) {
-	    factory = new Factory(false);
-	}
+    public CloseablePhpScriptEngine(
+            PhpScriptEngineFactory phpScriptEngineFactory) {
+	super(phpScriptEngineFactory);
     }
 
-
-  /**{@inheritDoc}*/
-  public String getLanguageName() {
-    return "php-interactive";
-  }
 }
