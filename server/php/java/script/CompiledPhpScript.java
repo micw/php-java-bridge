@@ -36,28 +36,24 @@ public class CompiledPhpScript extends CompiledScript implements CloneableScript
      * 
      */
     private final AbstractPhpScriptEngine abstractPhpScriptEngine;
-    private AbstractPhpScriptEngine scriptEngine;
     protected CompiledPhpScript(AbstractPhpScriptEngine abstractPhpScriptEngine) {
         super();
         this.abstractPhpScriptEngine = abstractPhpScriptEngine;
-        this.scriptEngine = this.abstractPhpScriptEngine;
     }
     /** {@inheritDoc} */
     public Object eval(ScriptContext context) throws ScriptException {
         try {
-    	return scriptEngine.evalCompiledPhp(AbstractPhpScriptEngine.DUMMY_READER, context);
+    	return this.abstractPhpScriptEngine.evalCompiledPhp(AbstractPhpScriptEngine.DUMMY_READER, context);
         } catch (Exception e) {
     	throw new ScriptException(e);
         }
     }
     /** {@inheritDoc} */
     public ScriptEngine getEngine() {
-        return scriptEngine;
+        return this.abstractPhpScriptEngine;
     }
     /** {@inheritDoc} */
     public Object clone() {
-        CompiledPhpScript other = new CompiledPhpScript(this.abstractPhpScriptEngine);
-        other.scriptEngine = (AbstractPhpScriptEngine) scriptEngine.clone();
-        return other;
+        return new CompiledPhpScript((AbstractPhpScriptEngine) this.abstractPhpScriptEngine.clone());
     }
 }

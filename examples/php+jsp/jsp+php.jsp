@@ -1,13 +1,12 @@
 <%@page import="javax.script.*" %>
 <%@page import="php.java.script.servlet.PhpCompiledHttpScriptContext" %>
-<%@page import="php.java.script.CloneableScript" %>
 
 <%!
 private static final CompiledScript script;
 static {
 	try {
 		script =((Compilable)(new ScriptEngineManager().getEngineByName("php-invocable"))).compile(
-        "<?php function f($v){return (string)$v+1;};?>");
+        "<?php echo 'Hello '.java_context()->get('hello').'!<br>\n'; function f($v){return (string)$v+1;};?>");
 	} catch (ScriptException e) {
 		throw new RuntimeException(e);
 	}
@@ -15,9 +14,27 @@ static {
 %>
 
 <%
-  CompiledScript  instance = (CompiledScript)((CloneableScript)script).clone();
-  instance.getEngine().setContext(new PhpCompiledHttpScriptContext(script.getEngine().getContext(),this,application,request,response));
+  // create a new copy of the compiled script
+  CompiledScript instance = (CompiledScript)((java.security.cert.CertStoreParameters)script).clone();
+
+  // create a custom ScriptContext to connect the engine to the ContextLoaderListener's FastCGI runner 
+  instance.getEngine().setContext(new PhpCompiledHttpScriptContext(instance.getEngine().getContext(),this,application,request,response));
+
+  // diplay hello world
+  instance.getEngine().put("hello", "eval1: " + Thread.currentThread());
   instance.eval();
-  out.println(((Invocable)instance.getEngine()).invokeFunction("f", new Object[]{1}));
+  out.println(((Invocable)instance.getEngine()).invokeFunction("f", new Object[]{1})+"<br>\n");
+  instance.getEngine().put("hello", "eval2: " + Thread.currentThread());
+  instance.eval();
+  out.println(((Invocable)instance.getEngine()).invokeFunction("f", new Object[]{2})+"<br>\n");
+  instance.getEngine().put("hello", "eval3: " + Thread.currentThread());
+  instance.eval();
+  out.println(((Invocable)instance.getEngine()).invokeFunction("f", new Object[]{3})+"<br>\n");
+  instance.getEngine().put("hello", "eval4: " + Thread.currentThread());
+  instance.eval();
+  out.println(((Invocable)instance.getEngine()).invokeFunction("f", new Object[]{4})+"<br>\n");
+  out.println("thread ended: " + Thread.currentThread());
+  
+  // release the resources immediately
   ((java.io.Closeable)instance.getEngine()).close();
 %>

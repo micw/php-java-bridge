@@ -1,13 +1,12 @@
 <%@page import="javax.script.*" %>
 <%@page import="php.java.script.servlet.PhpCompiledHttpScriptContext" %>
-<%@page import="php.java.script.CloneableScript" %>
 
 <%!
 private static final CompiledScript script;
 static {
 	try {
 		script =((Compilable)(new ScriptEngineManager().getEngineByName("php"))).compile(
-        "<?php echo 'Hello '.java_context()->get('hello').'!<br>'; ?>");
+        "<?php echo 'Hello '.java_context()->get('hello').'!<br>\n'; ?>");
 	} catch (ScriptException e) {
 		throw new RuntimeException(e);
 	}
@@ -16,19 +15,19 @@ static {
 
 <%
   // create a new copy of the compiled script
-  CompiledScript  instance = (CompiledScript)((CloneableScript)script).clone();
+  CompiledScript instance = (CompiledScript)((java.security.cert.CertStoreParameters)script).clone();
 
   // create a custom ScriptContext to connect the engine to the ContextLoaderListener's FastCGI runner 
-  ScriptContext ctx = new PhpCompiledHttpScriptContext(script.getEngine().getContext(),this,application,request,response);
-  instance.getEngine().setContext(ctx);
+  instance.getEngine().setContext(new PhpCompiledHttpScriptContext(instance.getEngine().getContext(),this,application,request,response));
   
   // diplay hello world
-  instance.getEngine().put("hello", "world");
+  instance.getEngine().put("hello", "eval1: " + Thread.currentThread());
   instance.eval();
-  instance.getEngine().put("hello", String.valueOf(this));
+  instance.getEngine().put("hello", "eval2: " + Thread.currentThread());
   instance.eval();
-  instance.getEngine().put("hello", "world");
+  instance.getEngine().put("hello", "eval3: " + Thread.currentThread());
   instance.eval();
-  instance.getEngine().put("hello", String.valueOf(instance));
+  instance.getEngine().put("hello", "eval4: " + Thread.currentThread());
   instance.eval();
+  out.println("thread ended: " + Thread.currentThread());
 %>

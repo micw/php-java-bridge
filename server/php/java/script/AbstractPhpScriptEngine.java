@@ -34,9 +34,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.lang.reflect.Field;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import javax.script.AbstractScriptEngine;
 import javax.script.Bindings;
@@ -46,6 +44,7 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptException;
 import javax.script.SimpleBindings;
+import javax.script.SimpleScriptContext;
 
 import php.java.bridge.ThreadPool;
 import php.java.bridge.Util;
@@ -156,17 +155,21 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
     }
     
     protected Object evalPhp(Reader reader, ScriptContext context) throws ScriptException {
+	if (isCompiled) 
+	    throw new IllegalStateException("already compiled");
+	
 	setContext(context);
         return doEvalPhp(reader, getContext());
     }
     protected Object evalCompiledPhp(Reader reader, ScriptContext context) throws ScriptException {
-	setContext(context);
+	if (context != getContext()) 
+	    setContext(context);
+
 	return doEvalCompiledPhp(reader, getContext());
     }
     
-    protected void compilePhp(Reader reader, ScriptContext context) throws IOException {
+    protected void compilePhp(Reader reader) throws IOException {
 	this.isCompiled = true;
-	setContext(context);
   	
   	if (compilerOutputFile == null) {
   	    compilerOutputFile = File.createTempFile("compiled-", ".php", null);
@@ -185,15 +188,11 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
     }
     
     private void updateGlobalEnvironment(ScriptContext context) throws IOException {
-	Bindings bindings = context.getBindings(ScriptContext.GLOBAL_SCOPE);
-	if(bindings==null) return;
-	for(Iterator ii = bindings.entrySet().iterator(); ii.hasNext(); ) {
-	    Entry entry = (Entry) ii.next();
-	    Object key = entry.getKey();
-	    Object val = entry.getValue();
-	    env.put(key, val);
+	if (isCompiled) {
+	    if (compilerOutputFile == null) 
+		throw new NullPointerException("SCRIPT_FILENAME");
+	    env.put("SCRIPT_FILENAME", compilerOutputFile.getCanonicalPath());
 	}
-	if (compilerOutputFile != null) env.put("SCRIPT_FILENAME", compilerOutputFile.getCanonicalPath());
     }
     private final class SimpleHeaderParser extends HeaderParser {
 	private WriterOutputStream writer;
@@ -362,7 +361,7 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
     /** {@inheritDoc} */
     public CompiledScript compile(final Reader reader) throws ScriptException {
 	try {
-	    compilePhp(reader, getContext());
+	    compilePhp(reader);
 	    return new CompiledPhpScript(this);
         } catch (IOException e) {
             throw new ScriptException(e);
@@ -374,14 +373,22 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
     private String cachedEmbeddedStandardHeader;
     /** {@inheritDoc} */
     public ScriptContext getContext() {
-	if (!(ctxCache instanceof IPhpScriptContext)) {
-	    setContext(ctxCache = new PhpScriptContext(super.getContext()));
+	if (ctxCache == null) {
+	    ctxCache = super.getContext();
+	    if (!(ctxCache instanceof IPhpScriptContext)) {
+		if (ctxCache == null) 
+		    ctxCache = new SimpleScriptContext();
+		ctxCache = new PhpScriptContext(ctxCache);
+		super.setContext(ctxCache);
+	    }
 	}
 	return ctxCache;
     }
     /** {@inheritDoc} */
     public void setContext(ScriptContext context) {
-	super.setContext(this.ctxCache = context);
+	super.setContext(context);
+	this.ctxCache = null;
+	getContext();
     }
     private String getSimpleStandardHeader(String filePath) {
         if (cachedSimpleStandardHeader != null) return cachedSimpleStandardHeader;
@@ -419,7 +426,6 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
     
     public Object clone() {
 	AbstractPhpScriptEngine other = (AbstractPhpScriptEngine) getFactory().getScriptEngine();
-	other.setContext(getContext());
 	other.isCompiled = isCompiled;
 	other.compilerOutputFile = compilerOutputFile;
 	return other;
