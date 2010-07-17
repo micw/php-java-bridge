@@ -24,7 +24,7 @@ package php.java.script;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-class CloseablePhpScriptEngine extends PhpScriptEngine {
+class CloseablePhpScriptEngine extends PhpScriptEngine implements java.io.Closeable {
 
     public CloseablePhpScriptEngine(
             PhpScriptEngineFactory phpScriptEngineFactory) {

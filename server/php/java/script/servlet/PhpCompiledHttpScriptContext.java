@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
 
 import javax.script.ScriptContext;
@@ -19,7 +21,9 @@ import php.java.bridge.NotImplementedException;
 import php.java.bridge.Util;
 import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.HeaderParser;
+import php.java.bridge.http.WriterOutputStream;
 import php.java.script.Continuation;
+import php.java.script.HttpProxy;
 import php.java.script.IPhpScriptContext;
 import php.java.script.PhpScriptContextDecorator;
 import php.java.script.PhpScriptWriter;
@@ -51,7 +55,7 @@ import php.java.servlet.ServletUtil;
 
 
 /**
- * A decorator for compiled script engines running in a servlet environment.
+ * An example decorator for compiled script engines running in a servlet environment.
  * Use
  * <blockquote>
  * <code>
@@ -83,7 +87,7 @@ public class PhpCompiledHttpScriptContext extends PhpScriptContextDecorator {
             OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy result,
             ILogger logger, boolean isCompiled) {
 		if (!isCompiled) 
-		    throw new NotImplementedException("Use the compilable interface instead");
+		    return new HttpProxy(reader, env, out, err, headerParser, result, logger);
 		else
 		    return new HttpFastCGIProxy(env, out,  err, headerParser, result, 
 			    ContextLoaderListener.getContextLoaderListener((ServletContext) getServletContext()).getConnectionPool()); 
@@ -177,35 +181,33 @@ public class PhpCompiledHttpScriptContext extends PhpScriptContextDecorator {
     public Writer getWriter() {
 	if(writer == null) {
 	    try {
-	        writer =  response.getWriter();
+	        setWriter(response.getWriter());
             } catch (IOException e) {
         	Util.printStackTrace(e);
             }
-	}
-	if(! (writer instanceof PhpScriptWriter)) {
-	    setWriter(writer);
-	    writer = super.getWriter();
 	}
 	return writer;
     }
     /** {@inheritDoc} */
     public void setWriter(Writer writer) {
+	if(! (writer instanceof PhpScriptWriter)) {
+	    writer = new PhpScriptWriter(new WriterOutputStream(writer));
+	}
 	super.setWriter(this.writer = writer);
     }
     protected Writer errorWriter;
     /** {@inheritDoc} */
     public Writer getErrorWriter() {
 	if(errorWriter == null) {
-	    errorWriter = PhpScriptLogWriter.getWriter(new php.java.servlet.Logger()); // FIXME
-	}
-	if(! (errorWriter instanceof PhpScriptWriter)) {
-	    setErrorWriter(errorWriter);
-	    errorWriter = super.getErrorWriter();
+	    setErrorWriter(PhpScriptLogWriter.getWriter(new php.java.servlet.Logger()));
 	}
 	return errorWriter;	
     }
     /**{@inheritDoc}*/
     public void setErrorWriter(Writer errorWriter) {
+	if(! (errorWriter instanceof PhpScriptWriter)) {
+	    errorWriter = new PhpScriptWriter(new WriterOutputStream(errorWriter));
+	}
 	super.setErrorWriter(this.errorWriter = errorWriter);
     }
     protected Reader reader;
@@ -225,12 +227,10 @@ public class PhpCompiledHttpScriptContext extends PhpScriptContextDecorator {
     }
     /**{@inheritDoc}*/
     public Object init(Object callable) throws Exception {
-	// FIXME
 	return php.java.bridge.http.Context.getManageable(callable);
     }
     /**{@inheritDoc}*/
     public void onShutdown(Object closeable) {
-	//FIXME
 	php.java.servlet.HttpContext.handleManaged(closeable, context);
     }
 
@@ -283,8 +283,17 @@ public class PhpCompiledHttpScriptContext extends PhpScriptContextDecorator {
     }
     /**{@inheritDoc}*/
     public String getRedirectURL(String webPath) {
-	//FIXME
-	return "http://127.0.0.1:"+getSocketName()+webPath;
+	 StringBuffer buf = new StringBuffer();
+	 buf.append(getSocketName());
+	 buf.append("/");
+	 buf.append(webPath);
+        try {
+            URI uri = new URI(request.isSecure()?"https:127.0.0.1":"http:127.0.0.1", buf.toString(), null);
+	    return uri.toASCIIString();
+        } catch (URISyntaxException e) {
+            Util.printStackTrace(e);
+            throw new RuntimeException(e);
+        }
     }
     /**{@inheritDoc}*/
     public String getSocketName() {

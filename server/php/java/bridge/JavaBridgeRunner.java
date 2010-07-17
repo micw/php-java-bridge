@@ -176,8 +176,7 @@ public class JavaBridgeRunner extends HttpServer {
 	    isLocal = false; 
 	    addr = addr.substring(5);
 	}
-	// FIXME check isLocal
-	return SSLServerSocketHelper.bind(Integer.parseInt(addr));
+	return SSLServerSocketHelper.bind(Integer.parseInt(addr), Util.BACKLOG, isLocal);
     }
 
     private static String getHeader(String key, HttpRequest req) {

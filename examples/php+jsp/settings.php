@@ -77,19 +77,19 @@ It starts a PHP FastCGI server, if possible and necessary. Requests for PHP scri
 
 <tr>
 <td>php_exec</td>
-<td><?php $val=java_values($config->getInitParameter("php_exec")); echo $val?$val:"php-cgi"?></td>
+<td><?php $val=java_values($context->getInitParameter("php_exec")); echo $val?$val:"php-cgi"?></td>
 <td>The name and location of your system_php_exec. For example <code>/opt/PHP/bin/php-cgi</code>. Default is <code>/usr/bin/php-cgi</code> or <code>c:/Program Files/PHP/php-cgi.exe</code> or a <code>php-cgi</code> from the PATH.</td>
 </tr>
 
 <tr>
 <td>prefer_system_php_exec</td>
-<td><?php $val=java_values($config->getInitParameter("prefer_system_php_exec")); echo $val?$val:"Off"?></td>
+<td><?php $val=java_values($context->getInitParameter("prefer_system_php_exec")); echo $val?$val:"Off"?></td>
 <td>Ignore a local <code>WEB-INF/cgi/php-cgi-ARCH-OS</code> executable from the web archive and use the specified <code>php_exec</code>. Default is Off.</td>
 </tr>
 
 <tr>
 <td>php_include_java</td>
-<td><?php $val=java_values($config->getInitParameter("php_include_java")); echo $val?$val:"Off"?></td>
+<td><?php $val=java_values($context->getInitParameter("php_include_java")); echo $val?$val:"Off"?></td>
 <td>Shall the server add <code>&lt?php include_once("java/Java.inc");?&gt;</code> at the top of each PHP script? Default is Off.</td>
 </tr>
 

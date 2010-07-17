@@ -59,6 +59,9 @@ public class InteractivePhpScriptEngine extends InvocablePhpScriptEngine {
     		"java_context()->setAttribute('php.java.bridge.JAVABRIDGE_TMP_VALUES', serialize($javabridge_values), 100);\n";
 
 
+    public InteractivePhpScriptEngine() {
+	super(new InteractivePhpScriptEngineFactory());
+    }
     /**
      * Create the interactive php script engine.
      * @param factory The engine factory

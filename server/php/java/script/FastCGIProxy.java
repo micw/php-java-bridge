@@ -62,6 +62,7 @@ public class FastCGIProxy extends Continuation implements IFCGIProcessFactory {
     private static final String PROCESSES = FCGIUtil.PHP_FCGI_CONNECTION_POOL_SIZE;
     private static final String MAX_REQUESTS = FCGIUtil.PHP_FCGI_MAX_REQUESTS;
     private static final String CGI_DIR = Util.TMPDIR.getAbsolutePath();
+    private static final boolean PHP_INCLUDE_JAVA = false; // servlet option
     
     public FastCGIProxy(Reader reader, Map env, OutputStream out,
             OutputStream err, HeaderParser headerParser,
@@ -169,10 +170,9 @@ public class FastCGIProxy extends Continuation implements IFCGIProcessFactory {
 	    HeaderParser.parseBody(buf, natIn, new OutputStreamFactory() { public OutputStream getOutputStream() throws IOException {return out;}}, headerParser);
 	    natIn.close();
 	} catch (InterruptedException e) {
-	    // TODO Auto-generated catch block
-	    e.printStackTrace();
-        } catch (Throwable t) {
-            t.printStackTrace();
+	    /*ignore*/
+	} catch (Throwable t) {
+            Util.printStackTrace(t);
         }
     }
     /** required by IFCGIProcessFactory */
@@ -222,8 +222,7 @@ public class FastCGIProxy extends Continuation implements IFCGIProcessFactory {
 
     /** {@inheritDoc} */
     public boolean getPhpIncludeJava() {
-	// FIXME
-	return false;
+	return PHP_INCLUDE_JAVA;
     }
 
 

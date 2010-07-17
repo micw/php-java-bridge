@@ -20,6 +20,7 @@ public class AllTests {
 	suite.addTestSuite(TestExceptionInvocable2.class);
 	suite.addTestSuite(TestSimpleInvocation.class);
 	suite.addTestSuite(TestInvocable.class);
+	suite.addTestSuite(TestURLReader.class);
 	suite.addTestSuite(TestCli.class);
 	suite.addTestSuite(TestPhpScriptEngine.class);
 	suite.addTestSuite(TestDiscovery.class);

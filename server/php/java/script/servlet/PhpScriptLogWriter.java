@@ -29,6 +29,7 @@ import java.io.OutputStream;
 
 import php.java.bridge.ILogger;
 import php.java.bridge.NotImplementedException;
+import php.java.script.PhpScriptWriter;
 
 /**
  * A PrintWriter which uses the JavaBridge logger.

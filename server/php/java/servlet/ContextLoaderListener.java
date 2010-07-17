@@ -31,7 +31,6 @@ import php.java.bridge.http.FCGIOutputStream;
 import php.java.bridge.http.FCGIUtil;
 import php.java.bridge.http.IFCGIProcess;
 import php.java.bridge.http.IFCGIProcessFactory;
-import php.java.script.PhpScriptEngine;
 import php.java.servlet.fastcgi.FCGIProcess;
 
 /*
@@ -147,9 +146,19 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
 
     	if (contextServer != null) contextServer.destroy();
     	
-    	// FIXME register pool with shutdown hook
-    	PhpScriptEngine.pool.destroy();
-    	new Exception("FIXME").printStackTrace();
+    	try {
+    	    //  PhpScriptEngine.pool.destroy();
+    	    Class scriptEngine = Class.forName("php.java.script.AbstractPhpScriptEngine");
+    	    Field pool = scriptEngine.getField("pool");
+    	    pool.setAccessible(true);
+    	    Method destroy = pool.get(scriptEngine).getClass().getMethod("destroy", Util.ZERO_PARAM);
+    	    destroy.setAccessible(true);
+    	    destroy.invoke(pool.get(scriptEngine), Util.ZERO_ARG);
+    	} catch (ClassNotFoundException e) {
+    	    /* ignore */
+        } catch (Throwable e) {
+            Util.printStackTrace(e);
+        }
     }
     /**{@inheritDoc}*/  
     public void contextInitialized(ServletContextEvent event) {

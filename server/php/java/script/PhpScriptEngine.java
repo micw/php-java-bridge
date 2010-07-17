@@ -55,7 +55,7 @@ public class PhpScriptEngine extends AbstractPhpScriptEngine {
      * Create a new ScriptEngine with a default context.
      */
     public PhpScriptEngine() {
-	super();
+	super(new PhpScriptEngineFactory());
     }
 
     /**

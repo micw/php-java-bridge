@@ -24,7 +24,7 @@ package php.java.script;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 class CloseableInteractivePhpScriptEngine extends
-        InteractivePhpScriptEngine {
+        InteractivePhpScriptEngine implements java.io.Closeable {
 
     public CloseableInteractivePhpScriptEngine(
             InteractivePhpScriptEngineFactory factory) {

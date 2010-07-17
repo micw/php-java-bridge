@@ -102,6 +102,15 @@
 </tr>
 
 <tr VALIGN=TOP>
+<td WIDTH="25%">Calling a remote PHP script.</td>
+
+<td WIDTH="25%"><a href="jsp%2Bphp2.jsp">Execute</a></td>
+
+<td WIDTH="25%"><a href="source.php?source=jsp%2Bphp2.jsp">Source</a></td>
+<td WIDTH="25%"></td>
+</tr>
+
+<tr VALIGN=TOP>
 <td WIDTH="25%">RMI/IIOP</td>
 
 <td WIDTH="25%"><a href="documentClient.php">Execute</a></td>

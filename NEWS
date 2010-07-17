@@ -34,6 +34,15 @@ Version 6.2.1
                                    --- ext --- mysql.so
                                    --- php-cgi      <-- moved here
 
+* The FastCGI configuration has been moved from the FastCGIServlet servlet config to the ContextLoaderListener context.
+  Please use <context-param parameter ... instead of <init-param servlet-parameter ...
+  
+* The PHP JSR 223 ScriptEngine API now supports the Compilable interface. Please see the php/java/tests JUnit tests.
+
+* The EngineFactory has been removed. Scripts running within a servlet context (see ContextLoaderListener) can
+  now use a ScriptContext decorator to access the FastCGI runner associated with the ContextLoaderListener. 
+  A sample decorator can be found in php.java.script.servlet.PhpCompiledHttpScriptContext
+  
 
 Version 6.1.2.1
 

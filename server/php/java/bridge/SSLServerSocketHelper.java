@@ -25,6 +25,7 @@ package php.java.bridge;
  */
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -32,9 +33,13 @@ import javax.net.ServerSocketFactory;
 import javax.net.ssl.SSLServerSocketFactory;
 
 class SSLServerSocketHelper {
-    public static final ISocketFactory bind(final int port) throws IOException {
+    public static final ISocketFactory bind(final int port, final int backlog, final boolean isLocal) throws IOException {
 	ServerSocketFactory ssocketFactory = SSLServerSocketFactory.getDefault(); 
-	final ServerSocket ssocket = ssocketFactory.createServerSocket(port);
+	final ServerSocket ssocket = 
+	    isLocal ? 
+		    ssocketFactory.createServerSocket(port, backlog, InetAddress.getByName("127.0.0.1")) :
+			ssocketFactory.createServerSocket(port, backlog);
+			
 	return new ISocketFactory() {
 	    
 	    /**{@inheritDoc}*/
@@ -50,6 +55,11 @@ class SSLServerSocketHelper {
 	    /**{@inheritDoc}*/
 	    public Socket accept() throws IOException {
 		return ssocket.accept();
+	    }
+	    
+	    /**{@inheritDoc}*/
+	    public String toString() {
+		return (isLocal?"HTTP_LOCAL:":"HTTPS:") +getSocketName();
 	    }
 	};
     }

@@ -85,6 +85,10 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
 	return Util.COMMON_ENVIRONMENT;
     }
 
+    /** 
+     * Script engines are started from this pool.
+     * Use pool.destroy() to destroy the thread pool upon JVM or servlet shutdown
+     */
     public static final ThreadPool pool = getThreadPool();
     private static synchronized ThreadPool getThreadPool() {
 	return new ThreadPool("JavaBridgeHttpProxy", Integer.parseInt(Util.THREAD_POOL_MAX_SIZE)) {
@@ -97,18 +101,11 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
     }
 
     /**
-     * Create a new ScriptEngine with a default context.
-     */
-    public AbstractPhpScriptEngine() {
-    }
-
-    /**
      * Create a new ScriptEngine from a factory.
      * @param factory The factory
      * @see #getFactory()
      */
     public AbstractPhpScriptEngine(PhpScriptEngineFactory factory) {
-        this();
         this.factory = factory;
     }
     /**

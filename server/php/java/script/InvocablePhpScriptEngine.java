@@ -87,7 +87,7 @@ public class InvocablePhpScriptEngine extends AbstractPhpScriptEngine implements
      * Create a new ScriptEngine with a default context.
      */
     public InvocablePhpScriptEngine() {
-	super();
+	super(new PhpScriptEngineFactory());
     }
 
     /**
@@ -249,7 +249,7 @@ public class InvocablePhpScriptEngine extends AbstractPhpScriptEngine implements
        return resultProxy;
     }
 
-    protected Object eval(URLReader reader, ScriptContext context, String name) throws ScriptException {
+    protected Object eval(URLReader reader, ScriptContext context) throws ScriptException {
         if((continuation != null) || (reader == null) ) release();
   	if(reader==null) return null;
   	
