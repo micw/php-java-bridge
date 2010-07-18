@@ -19,6 +19,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 
 import php.java.bridge.ILogger;
+import php.java.bridge.ThreadPool;
 import php.java.bridge.Util;
 import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.FCGIConnectException;
@@ -103,6 +104,8 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
     private boolean isJBoss;
     private ContextServer contextServer; // shared with FastCGIServlet
 
+    private ThreadPool fcgiThreadPool;
+
 
     
     /** The key used to store the ContextLoaderListener in the servlet context */
@@ -141,24 +144,14 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
 	    e.printStackTrace();
 	}
     	if(fcgiConnectionPool!=null) fcgiConnectionPool.destroy();
+    	if (fcgiThreadPool!=null) fcgiThreadPool.destroy();
+    	
     	if (channelName!=null) channelName.destroy();
     	fcgiConnectionPool = null;
 
     	if (contextServer != null) contextServer.destroy();
     	
-    	try {
-    	    //  PhpScriptEngine.pool.destroy();
-    	    Class scriptEngine = Class.forName("php.java.script.AbstractPhpScriptEngine");
-    	    Field pool = scriptEngine.getField("pool");
-    	    pool.setAccessible(true);
-    	    Method destroy = pool.get(scriptEngine).getClass().getMethod("destroy", Util.ZERO_PARAM);
-    	    destroy.setAccessible(true);
-    	    destroy.invoke(pool.get(scriptEngine), Util.ZERO_ARG);
-    	} catch (ClassNotFoundException e) {
-    	    /* ignore */
-        } catch (Throwable e) {
-            Util.printStackTrace(e);
-        }
+    	Util.destroy();
     }
     /**{@inheritDoc}*/  
     public void contextInitialized(ServletContextEvent event) {
@@ -194,6 +187,7 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
 	} catch (FCGIConnectException e) {
 	    Util.printStackTrace(e);
 	}
+	fcgiThreadPool = createThreadPool(php_fcgi_connection_pool_size_number);
     }
     private void init() {
 	String value;
@@ -547,7 +541,12 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
 	channelName.startServer(logger);
 	return new FCGIConnectionPool(channelName, children, php_fcgi_max_requests_number, defaultPoolFactory, php_fcgi_connection_pool_timeout_number);
     }
-
+    private ThreadPool createThreadPool(int children) {
+	return new ThreadPool("JavaBridgeServletScriptEngineProxy", children);
+    }
+    public ThreadPool getThreadPool() {
+	return fcgiThreadPool;
+    }
     public ContextServer getContextServer() {
 	return contextServer;
     }

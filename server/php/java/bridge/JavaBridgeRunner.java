@@ -459,4 +459,10 @@ public class JavaBridgeRunner extends HttpServer {
     public void waitFor () throws InterruptedException {
         runner.httpServer.join();
     }
+    /**
+     * Destroy the JavaBridgeRunner instance
+     */
+    public static void destroyRunner() {
+	if(runner!=null) runner.destroy();
+    }
 }

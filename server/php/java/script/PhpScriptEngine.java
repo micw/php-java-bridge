@@ -33,6 +33,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
 
+import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
 
@@ -66,6 +67,15 @@ public class PhpScriptEngine extends AbstractPhpScriptEngine {
     public PhpScriptEngine(PhpScriptEngineFactory factory) {
         super(factory);
     }
+    /**
+     * Create a new ScriptEngine with bindings.
+     * @param n the bindings
+     */
+    public PhpScriptEngine(Bindings n) {
+	this();
+	setBindings(n, ScriptContext.ENGINE_SCOPE);
+    }
+	
     protected Reader getLocalReader(Reader reader,boolean embedJavaInc) throws IOException {
         /* header: <? require_once("http://localhost:<ourPort>/JavaBridge/java/Java.inc"); ?> */
 	ByteArrayOutputStream out = new ByteArrayOutputStream();

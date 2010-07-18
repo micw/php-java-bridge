@@ -23,7 +23,6 @@ import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.HeaderParser;
 import php.java.bridge.http.WriterOutputStream;
 import php.java.script.Continuation;
-import php.java.script.HttpProxy;
 import php.java.script.IPhpScriptContext;
 import php.java.script.PhpScriptContextDecorator;
 import php.java.script.PhpScriptWriter;
@@ -86,11 +85,15 @@ public class PhpCompiledHttpScriptContext extends PhpScriptContextDecorator {
     public Continuation createContinuation(Reader reader, Map env,
             OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy result,
             ILogger logger, boolean isCompiled) {
-		if (!isCompiled) 
-		    return new HttpProxy(reader, env, out, err, headerParser, result, logger);
-		else
-		    return new HttpFastCGIProxy(env, out,  err, headerParser, result, 
-			    ContextLoaderListener.getContextLoaderListener((ServletContext) getServletContext()).getConnectionPool()); 
+		Continuation cont;
+		if (isCompiled) {
+		    ContextLoaderListener listener = ContextLoaderListener.getContextLoaderListener((ServletContext) getServletContext());
+		    cont = new HttpFastCGIProxy(env, out,  err, headerParser, result, listener.getConnectionPool());
+		    listener.getThreadPool().start(cont);
+		} else 
+		    cont = super.createContinuation(reader, env, out, err, headerParser, result, logger, isCompiled);
+
+		return cont;
     }
     
     /** Integer value for the level of SCRIPT_SCOPE */

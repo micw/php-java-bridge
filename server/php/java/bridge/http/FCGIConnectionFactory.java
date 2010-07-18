@@ -42,9 +42,9 @@ public abstract class FCGIConnectionFactory {
     protected IFCGIProcessFactory processFactory;
     
     /* The fast CGI Server process on this computer. Switched off per default. */
-    protected static IFCGIProcess proc = null;
-    private static boolean fcgiStarted = false;
-    private static final Object fcgiStartLock = new Object(); // one lock for all servlet intances of this class loader
+    protected IFCGIProcess proc = null;
+    private boolean fcgiStarted = false;
+    private final Object fcgiStartLock = new Object(); // one lock for all servlet intances of this class loader
     
     /**
      * Create a new FCGIConnectionFactory using a FCGIProcessFactory
@@ -61,7 +61,7 @@ public abstract class FCGIConnectionFactory {
 	/*
 	 * Try to start the FastCGI server,
 	 */
-	synchronized(FCGIConnectionFactory.fcgiStartLock) {
+	synchronized(fcgiStartLock) {
 	    if(!fcgiStarted) {
 		    if(canStartFCGI()) 
 			try {
@@ -114,7 +114,7 @@ public abstract class FCGIConnectionFactory {
     }
 	
     public void destroy() {
-	synchronized(FCGIConnectionFactory.fcgiStartLock) {
+	synchronized(fcgiStartLock) {
 	    fcgiStarted = false;
 	    if(proc==null) return;  	
 	    try {

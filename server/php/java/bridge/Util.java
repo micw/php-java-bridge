@@ -48,6 +48,8 @@ import java.util.TimeZone;
 import java.util.Vector;
 import java.util.Map.Entry;
 
+import php.java.bridge.http.FCGIConnectionPool;
+
 
 
 /**
@@ -61,7 +63,24 @@ public final class Util {
         initGlobals();
     }
 
-    
+    /** 
+     * Script engines are started from this pool.
+     * Use pool.destroy() to destroy the thread pool upon JVM or servlet shutdown
+     */
+    public static final ThreadPool PHP_SCRIPT_ENGINE_THREAD_POOL = new ThreadPool("JavaBridgeStandaloneScriptEngineProxy", Integer.parseInt(Util.THREAD_POOL_MAX_SIZE)) {
+	    protected Delegate createDelegate(String name) {
+		Delegate d = super.createDelegate(name);
+		d.setDaemon(true);
+		return d;
+	    }
+	};
+
+    /** 
+     * Only for internal use. The library standalone ScriptEngine FastCGI connection pool, if any 
+     */
+    public static FCGIConnectionPool fcgiConnectionPool;
+
+
     /** Used by the watchdog. After MAX_WAIT (default 1500ms) the ContextRunner times out. Raise this value if you want to debug the bridge.
      * See also system property <code>php.java.bridge.max_wait</code>
      */
@@ -480,6 +499,7 @@ public final class Util {
      * 5: log method invocations
      */
     public static int logLevel;
+
 
     /**
      * print a message on a given log level
@@ -1478,5 +1498,25 @@ public final class Util {
 	buf.append(webPath);
 	buf.append(".phpjavabridge");
 	return buf.toString();
+    }
+    /**
+     * Destroy the thread associated with util.
+     */
+    public static void destroy () {
+	try {
+	    PHP_SCRIPT_ENGINE_THREAD_POOL.destroy();
+	} catch (Exception e) {
+	    Util.printStackTrace(e);
+	}
+	try {
+	    if (fcgiConnectionPool!=null) fcgiConnectionPool.destroy();
+	} catch (Exception e) {
+	    Util.printStackTrace(e);
+	}
+	try {
+	    JavaBridgeRunner.destroyRunner();
+	} catch (Exception e) {
+	    Util.printStackTrace(e);
+	}
     }
 }

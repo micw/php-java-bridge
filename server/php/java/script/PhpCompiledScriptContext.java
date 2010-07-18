@@ -7,6 +7,7 @@ import java.io.Reader;
 import java.util.Map;
 
 import php.java.bridge.ILogger;
+import php.java.bridge.Util;
 import php.java.bridge.http.HeaderParser;
 
 /*
@@ -52,6 +53,13 @@ public class PhpCompiledScriptContext extends PhpScriptContextDecorator {
     public Continuation createContinuation(Reader reader, Map env,
             OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy result,
             ILogger logger, boolean isCompiled) {
-    		return new FastCGIProxy(reader, env, out,  err, headerParser, result, logger); 
+		Continuation cont;
+		if (isCompiled) {
+		    cont = new FastCGIProxy(reader, env, out,  err, headerParser, result, logger);
+		    Util.PHP_SCRIPT_ENGINE_THREAD_POOL.start(cont);
+		} else {
+		    cont = super.createContinuation(reader, env, out, err, headerParser, result, logger, isCompiled);
+		}
+    		return cont;
     }
 }

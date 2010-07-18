@@ -46,7 +46,6 @@ import javax.script.ScriptException;
 import javax.script.SimpleBindings;
 import javax.script.SimpleScriptContext;
 
-import php.java.bridge.ThreadPool;
 import php.java.bridge.Util;
 import php.java.bridge.http.AbstractChannelName;
 import php.java.bridge.http.ContextServer;
@@ -60,7 +59,7 @@ import php.java.bridge.http.WriterOutputStream;
  *@see php.java.script.InvocablePhpScriptEngine
  *@see php.java.script.PhpScriptEngine
  */
-abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements IPhpScriptEngine, Compilable, java.io.FileFilter {
+abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements IPhpScriptEngine, Compilable, java.io.FileFilter, CloneableScript {
 
     /**
      * The allocated script
@@ -85,28 +84,15 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
 	return Util.COMMON_ENVIRONMENT;
     }
 
-    /** 
-     * Script engines are started from this pool.
-     * Use pool.destroy() to destroy the thread pool upon JVM or servlet shutdown
-     */
-    public static final ThreadPool pool = getThreadPool();
-    private static synchronized ThreadPool getThreadPool() {
-	return new ThreadPool("JavaBridgeHttpProxy", Integer.parseInt(Util.THREAD_POOL_MAX_SIZE)) {
-	    protected Delegate createDelegate(String name) {
-		Delegate d = super.createDelegate(name);
-		d.setDaemon(true);
-		return d;
-	    }
-	};
-    }
-
     /**
      * Create a new ScriptEngine from a factory.
      * @param factory The factory
      * @see #getFactory()
      */
     public AbstractPhpScriptEngine(PhpScriptEngineFactory factory) {
-        this.factory = factory;
+	super();
+	this.factory = factory;
+        getContext();
     }
     /**
      * Set the context id (X_JAVABRIDGE_CONTEXT) and the override flag (X_JAVABRIDGE_OVERRIDE_HOSTS) into env
@@ -155,14 +141,29 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
 	if (isCompiled) 
 	    throw new IllegalStateException("already compiled");
 	
-	setContext(context);
-        return doEvalPhp(reader, getContext());
+	ScriptContext current = getContext();
+	if (current != context)
+	        try {
+		    setContext(context);
+	            return doEvalPhp(reader, context);
+	        } finally {
+	            setContext(current);
+	        }
+	else 
+	    return doEvalPhp(reader, current);
     }
     protected Object evalCompiledPhp(Reader reader, ScriptContext context) throws ScriptException {
-	if (context != getContext()) 
-	    setContext(context);
-
-	return doEvalCompiledPhp(reader, getContext());
+	
+	ScriptContext current = getContext();
+	if (current != context)
+	        try {
+		    setContext(context);
+	            return doEvalCompiledPhp(reader, context);
+	        } finally {
+	            setContext(current);
+	        }
+	else 
+	    return doEvalCompiledPhp(reader, current);
     }
     
     protected void compilePhp(Reader reader) throws IOException {
@@ -244,7 +245,6 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
      */
     final protected Object doEval(Reader reader, ScriptContext context) throws Exception {
     	continuation = getContinuation(reader, context);
-     	pool.start(continuation);
     	return continuation.getPhpScript();
     }
 
@@ -368,6 +368,7 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
     private String cachedSimpleStandardHeader;
     private ScriptContext ctxCache;
     private String cachedEmbeddedStandardHeader;
+
     /** {@inheritDoc} */
     public ScriptContext getContext() {
 	if (ctxCache == null) {
@@ -421,6 +422,7 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
         return filePath == null ? getEmbeddedStandardHeader(filePath):getSimpleStandardHeader(filePath);
     }
     
+    /** {@inheritDoc} */
     public Object clone() {
 	AbstractPhpScriptEngine other = (AbstractPhpScriptEngine) getFactory().getScriptEngine();
 	other.isCompiled = isCompiled;

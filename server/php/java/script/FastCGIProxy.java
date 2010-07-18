@@ -59,7 +59,7 @@ import php.java.script.servlet.HttpFastCGIProxy;
  */
 
 public class FastCGIProxy extends Continuation implements IFCGIProcessFactory {
-    private static final String PROCESSES = FCGIUtil.PHP_FCGI_CONNECTION_POOL_SIZE;
+    private static final String PROCESSES = Util.THREAD_POOL_MAX_SIZE; // PROCESSES must == Util.THREAD_POOL_MAX_SIZE
     private static final String MAX_REQUESTS = FCGIUtil.PHP_FCGI_MAX_REQUESTS;
     private static final String CGI_DIR = Util.TMPDIR.getAbsolutePath();
     private static final boolean PHP_INCLUDE_JAVA = false; // servlet option
@@ -142,7 +142,7 @@ public class FastCGIProxy extends Continuation implements IFCGIProcessFactory {
     protected void setupFastCGIServer() throws FCGIConnectException {
 	synchronized(globalCtxLock) {
 	    if(null == fcgiConnectionPool) {
-		fcgiConnectionPool= createConnectionPool(Integer.parseInt(PROCESSES));
+		Util.fcgiConnectionPool = fcgiConnectionPool = createConnectionPool(Integer.parseInt(PROCESSES));
 	    }
 	}
 
@@ -166,13 +166,18 @@ public class FastCGIProxy extends Continuation implements IFCGIProcessFactory {
 	    natOut.writeBegin();
 	    natOut.writeParams(env);
 	    natOut.write(FCGIUtil.FCGI_STDIN, FCGIUtil.FCGI_EMPTY_RECORD);
-	    natOut.close();
+	    natOut.close(); natOut = null;
 	    HeaderParser.parseBody(buf, natIn, new OutputStreamFactory() { public OutputStream getOutputStream() throws IOException {return out;}}, headerParser);
-	    natIn.close();
+	    natIn.close(); natIn = null;
+	    connection = null;
 	} catch (InterruptedException e) {
 	    /*ignore*/
 	} catch (Throwable t) {
             Util.printStackTrace(t);
+        } finally {
+	    if(connection!=null) connection.setIsClosed(); 
+	    if(natIn!=null) try {natIn.close();} catch (IOException e) {}
+	    if(natOut!=null) try {natOut.close();} catch (IOException e) {}
         }
     }
     /** required by IFCGIProcessFactory */

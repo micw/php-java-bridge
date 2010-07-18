@@ -26,6 +26,7 @@ package php.java.script;
 
 import java.io.IOException;
 
+import javax.script.Bindings;
 import javax.script.Invocable;
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
@@ -68,6 +69,14 @@ public class InteractivePhpScriptEngine extends InvocablePhpScriptEngine {
      */
     public InteractivePhpScriptEngine(InteractivePhpScriptEngineFactory factory) {
         super(factory);
+    }
+    /**
+     * Create a new ScriptEngine with bindings.
+     * @param n the bindings
+     */
+    public InteractivePhpScriptEngine(Bindings n) {
+	this();
+	setBindings(n, ScriptContext.ENGINE_SCOPE);
     }
 
     boolean hasScript = false;

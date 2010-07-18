@@ -37,6 +37,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.script.Bindings;
 import javax.script.Invocable;
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
@@ -97,6 +98,14 @@ public class InvocablePhpScriptEngine extends AbstractPhpScriptEngine implements
      */
     public InvocablePhpScriptEngine(PhpScriptEngineFactory factory) {
         super(factory);
+    }
+    /**
+     * Create a new ScriptEngine with bindings.
+     * @param n the bindings
+     */
+    public InvocablePhpScriptEngine(Bindings n) {
+	this();
+	setBindings(n, ScriptContext.ENGINE_SCOPE);
     }
 
     /* (non-Javadoc)

@@ -34,11 +34,11 @@ import javax.script.ScriptContext;
 
 import php.java.bridge.ILogger;
 import php.java.bridge.JavaBridgeRunner;
+import php.java.bridge.NotImplementedException;
 import php.java.bridge.Util;
 import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.HeaderParser;
 import php.java.bridge.http.IContext;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
  * This class implements a simple script context for PHP. It starts a standalone 
@@ -129,10 +129,15 @@ public final class PhpScriptContext extends AbstractPhpScriptContext implements 
     public Continuation createContinuation(Reader reader, Map env,
             OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy result,
             ILogger logger, boolean isCompiled) {
+		Continuation cont;
+		
 		if (isCompiled)
-	    		return new FastCGIProxy(reader, env, out,  err, headerParser, result, logger); 
+	    		cont = new FastCGIProxy(reader, env, out,  err, headerParser, result, logger); 
 		else
-    			return new HttpProxy(reader, env, out,  err, headerParser, result, logger); 
+    			cont = new HttpProxy(reader, env, out,  err, headerParser, result, logger);
+		
+		Util.PHP_SCRIPT_ENGINE_THREAD_POOL.start(cont);
+		return cont;
     }
     private static JavaBridgeRunner httpServer;
     private static synchronized final JavaBridgeRunner getHttpServer() {

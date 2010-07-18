@@ -153,7 +153,7 @@ public abstract class Continuation implements IContinuation, Runnable {
     public void release() throws InterruptedException {
 	    /* Release the cont.call(cont) from PHP. After that the PHP script may terminate */
 	    synchronized (lockObject) {
-		lockObject.notify();
+		lockObject.notifyAll();
 	    }
 	    scriptLock.waitForRunner();
     }

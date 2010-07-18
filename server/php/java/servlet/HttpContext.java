@@ -10,9 +10,9 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import php.java.bridge.NotImplementedException;
 import php.java.bridge.Util;
 import php.java.bridge.http.IContext;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier

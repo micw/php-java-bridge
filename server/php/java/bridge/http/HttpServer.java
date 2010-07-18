@@ -100,9 +100,9 @@ public abstract class HttpServer implements Runnable {
 	if(!serverPort.startsWith("INET")) serverPort = (Util.JAVABRIDGE_PROMISCUOUS ? "INET:" : "INET_LOCAL:") + serverPort;
 	socket = isSecure ? bindSecure(serverPort) : bind(serverPort);
 	try {
-		pool = createThreadPool(Util.EXTENSION_NAME+"HttpServerThreadPool");
+		pool = createThreadPool("JavaBridgeHttpServerThreadPool");
 	} catch (SecurityException e) {/*ignore*/}
-	httpServer = new Util.Thread(this, Util.EXTENSION_NAME+"HttpServer");
+	httpServer = new Util.Thread(this, "JavaBridgeHttpServer");
         httpServer.start();
     }
     /**
@@ -222,10 +222,12 @@ public abstract class HttpServer implements Runnable {
 
 	    try {
 		sock = socket.accept();
+	    } catch (java.net.SocketException e) {
+		return; // socket closed
 	    } catch (IOException e) {
 		Util.printStackTrace(e);
 		return;
-	    } // socket closed
+	    } 
 	    
 	    Util.logDebug("Socket connection accepted");
 	    if(pool==null) {
@@ -305,7 +307,12 @@ public abstract class HttpServer implements Runnable {
     public void destroy() {
 	try {
 	    socket.close();
-	} catch (IOException e) {
+	} catch (Exception e) {
+	    Util.printStackTrace(e);
+	}
+	try {
+	    if(pool!=null) pool.destroy();
+	} catch (Exception e) {
 	    Util.printStackTrace(e);
 	}
     }

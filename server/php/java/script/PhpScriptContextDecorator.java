@@ -33,9 +33,9 @@ import java.util.Map;
 import javax.script.Bindings;
 
 import php.java.bridge.ILogger;
+import php.java.bridge.NotImplementedException;
 import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.HeaderParser;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
  * Abstract class for IPhpScriptContexts. The abstract class itself provides default methods that pass 
