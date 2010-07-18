@@ -88,7 +88,7 @@ public class InvocablePhpScriptEngine extends AbstractPhpScriptEngine implements
      * Create a new ScriptEngine with a default context.
      */
     public InvocablePhpScriptEngine() {
-	super(new PhpScriptEngineFactory());
+	this(new PhpScriptEngineFactory());
     }
 
     /**

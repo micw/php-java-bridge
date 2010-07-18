@@ -11,6 +11,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 
 import junit.framework.TestCase;
+import php.java.script.IPhpScriptContext;
 import php.java.script.URLReader;
 
 public class TestURLReader extends TestCase {
@@ -32,7 +33,7 @@ public class TestURLReader extends TestCase {
 	
 	// Note: don't use the following line in your own code
 	// URLReader should be used to connect to a real HTTP server, usually running on port 80
-	e.eval(new URLReader(new URL("http://localhost:8080/JavaBridge/java/JavaProxy.php")));
+	e.eval(new URLReader(new URL("http://localhost:"+((IPhpScriptContext)e.getContext()).getSocketName()+"/JavaBridge/java/JavaProxy.php")));
 	
 	OutputStream out = new ByteArrayOutputStream();
 	Writer w = new OutputStreamWriter(out); 

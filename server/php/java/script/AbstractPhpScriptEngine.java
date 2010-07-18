@@ -371,6 +371,11 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
     private String cachedEmbeddedStandardHeader;
 
     /** {@inheritDoc} */
+    protected ScriptContext getScriptContext(Bindings bindings) {
+	return new PhpScriptContext(super.getScriptContext(bindings));
+    }
+    
+    /** {@inheritDoc} */
     public ScriptContext getContext() {
 	if (ctxCache == null) {
 	    ctxCache = super.getContext();
