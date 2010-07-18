@@ -219,4 +219,8 @@ public abstract class PhpScriptContextDecorator implements IPhpScriptContext {
     public ContextServer getContextServer() {
 	return ctx.getContextServer();
     }
+    /**{@inheritDoc}*/
+    public void startContinuation() {
+	ctx.startContinuation();
+    }
 }

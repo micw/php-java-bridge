@@ -69,6 +69,12 @@ public interface IPhpScriptContext extends IManaged, Invocable, IContext, Script
      * @return the Continuation
      */
     public Continuation createContinuation(Reader reader, Map env, OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy result, ILogger logger, boolean isCompiled);
+    
+    /**
+     * Start the current continuation using a context-specific thread pool
+     */
+    public void startContinuation();
+    
     /**
      * Get the context server associated with this context, usually a HttpServer (JavaBridgeRunner) or a ContextServer from a ContextLoaderListener
      * @return the ContextServer

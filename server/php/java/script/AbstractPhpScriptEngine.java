@@ -92,7 +92,7 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
     public AbstractPhpScriptEngine(PhpScriptEngineFactory factory) {
 	super();
 	this.factory = factory;
-        getContext();
+        getContext(); // update context in parent as a side effect
     }
     /**
      * Set the context id (X_JAVABRIDGE_CONTEXT) and the override flag (X_JAVABRIDGE_OVERRIDE_HOSTS) into env
@@ -233,6 +233,7 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
     	Continuation kont = phpScriptContext.createContinuation(reader, env, out,  err, headerParser, resultProxy = new ResultProxy(this), Util.getLogger(), isCompiled);
 
     	phpScriptContext.setContinuation(kont);
+    	phpScriptContext.startContinuation();
 	return kont;
     }
     /** Method called to evaluate a PHP file w/o compilation */

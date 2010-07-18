@@ -89,11 +89,14 @@ public class PhpCompiledHttpScriptContext extends PhpScriptContextDecorator {
 		if (isCompiled) {
 		    ContextLoaderListener listener = ContextLoaderListener.getContextLoaderListener((ServletContext) getServletContext());
 		    cont = new HttpFastCGIProxy(env, out,  err, headerParser, result, listener.getConnectionPool());
-		    listener.getThreadPool().start(cont);
 		} else 
 		    cont = super.createContinuation(reader, env, out, err, headerParser, result, logger, isCompiled);
 
 		return cont;
+    }
+    public void startContinuation() {
+	ContextLoaderListener listener = ContextLoaderListener.getContextLoaderListener((ServletContext) getServletContext());
+	listener.getThreadPool().start(getContinuation());
     }
     
     /** Integer value for the level of SCRIPT_SCOPE */

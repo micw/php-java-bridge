@@ -51,7 +51,7 @@ import php.java.bridge.http.IContext;
  *
  */
 
-public final class PhpScriptContext extends AbstractPhpScriptContext implements IPhpScriptContext {
+public final class PhpScriptContext extends AbstractPhpScriptContext {
     public PhpScriptContext(ScriptContext ctx) {
 	super(ctx);
     }
@@ -136,7 +136,6 @@ public final class PhpScriptContext extends AbstractPhpScriptContext implements 
 		else
     			cont = new HttpProxy(reader, env, out,  err, headerParser, result, logger);
 		
-		Util.PHP_SCRIPT_ENGINE_THREAD_POOL.start(cont);
 		return cont;
     }
     private static JavaBridgeRunner httpServer;

@@ -28,6 +28,7 @@ import java.io.Writer;
 
 import javax.script.ScriptContext;
 
+import php.java.bridge.Util;
 import php.java.bridge.http.IContext;
 import php.java.bridge.http.WriterOutputStream;
 
@@ -68,7 +69,10 @@ public abstract class AbstractPhpScriptContext extends ScriptContextDecorator im
     * of the invocable script, if the user has provided its own.
     */
    private boolean continuationCalled;
-
+   /**{@inheritDoc}*/
+   public void startContinuation() {
+       Util.PHP_SCRIPT_ENGINE_THREAD_POOL.start(kont);
+   }
     /**@inheritDoc*/
     public void setContinuation(Continuation kont) {
 	    this.kont = kont;

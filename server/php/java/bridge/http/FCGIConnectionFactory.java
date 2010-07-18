@@ -44,7 +44,7 @@ public abstract class FCGIConnectionFactory {
     /* The fast CGI Server process on this computer. Switched off per default. */
     protected IFCGIProcess proc = null;
     private boolean fcgiStarted = false;
-    private final Object fcgiStartLock = new Object(); // one lock for all servlet intances of this class loader
+    private final Object fcgiStartLock = new Object();
     
     /**
      * Create a new FCGIConnectionFactory using a FCGIProcessFactory
