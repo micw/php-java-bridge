@@ -223,6 +223,9 @@
   </target>
   <target name="JavaBridgeWar" depends="JavaBridgeJar,PhpServletJar,ScriptApiJar,PhpScriptJar,JavaInc,JavaProxyPhp,init">
     <war destfile="${distDir}/JavaBridge.war" webxml="${javaBaseDir}/WEB-INF/web.xml">
+      <fileset dir="${javaBaseDir}">
+    	<include name="WEB-INF/weblogic.xml" />
+	  </fileset>
       <fileset dir="${javaClassDir}">
 	<include name="*.class" />
       </fileset>
