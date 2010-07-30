@@ -24,6 +24,7 @@ public class AllTests {
 	suite.addTestSuite(TestCli.class);
 	suite.addTestSuite(TestPhpScriptEngine.class);
 	suite.addTestSuite(TestDiscovery.class);
+	suite.addTestSuite(TestBindings.class);
 	//$JUnit-END$
 	return suite;
     }
