@@ -20,7 +20,7 @@ static {
 	  // create a custom ScriptContext to connect the engine to the ContextLoaderListener's FastCGI runner 
 	  instance.getEngine().setContext(new PhpCompiledHttpScriptContext(instance.getEngine().getContext(),this,application,request,response));
 	
-	  // diplay hello world
+	  // display hello world
 	  instance.getEngine().put("hello", "eval1: " + Thread.currentThread());
 	  instance.eval();
 	  out.println(((Invocable)instance.getEngine()).invokeFunction("f", new Object[]{1})+"<br>\n");
