@@ -228,7 +228,15 @@ public class FastCGIServlet extends HttpServlet {
 	}
 	env.environment.put("REDIRECT_STATUS", "200");
 	env.environment.put("SERVER_SOFTWARE", Util.EXTENSION_NAME);
-	env.environment.put("HTTP_HOST", env.environment.get("SERVER_NAME")+":"+env.environment.get("SERVER_PORT"));
+	
+	String sPort = (String) env.environment.get("SERVER_PORT");
+	StringBuffer httpHost = new StringBuffer((String)env.environment.get("SERVER_NAME"));
+	if (! "80".equals(sPort)) { // append port only if necessary, see Patch#3040838
+	    httpHost.append(":");
+	    httpHost.append(sPort);
+	}
+	env.environment.put("HTTP_HOST", httpHost.toString());
+	
 	String remotePort = null;
 	try {
 	    remotePort = String.valueOf(req.getRemotePort());
