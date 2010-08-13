@@ -5,6 +5,14 @@ Please send bug reports, questions and suggestions to
 
 Version 6.2.1
 
+* Incompatible change for those who use $_SERVER["REQUEST_URI"] as a cache key.
+  Please either use PHP_SELF or please set 
+    <init-param>
+      <param-name>php_request_uri_is_unique</param-name>
+      <param-value>true</param-value>
+    </init-param>
+  
+
 * $s = new java("java.lang.String", "hello");
   $b = $s->getBytes("ASCII");
   echo (string)$b;

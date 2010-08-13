@@ -70,12 +70,15 @@ import php.java.servlet.ServletUtil;
  * @author jostb
  */
 public class FastCGIServlet extends HttpServlet {
+    protected static final String _80 = "80";
+    protected static final String _443 = "443";
+
     private static final long serialVersionUID = 3545800996174312757L;
 
-    private String documentRoot;
-    private String serverSignature;
+    protected String documentRoot;
+    protected String serverSignature;
 
-    private static class Environment {
+    protected static class Environment {
 	public IContextFactory ctx;
 	public String contextPath;
 	public String pathInfo;
@@ -92,6 +95,8 @@ public class FastCGIServlet extends HttpServlet {
     protected String serverInfo;
 
     protected FCGIConnectionPool connectionPool;
+
+    protected boolean phpRequestURIisUnique; // Patch#3040849
     
     /**
      * Create a new FastCGI servlet which connects to a PHP FastCGI server using a connection pool.
@@ -112,6 +117,10 @@ public class FastCGIServlet extends HttpServlet {
 	super.init(config);
 	
 	context = config.getServletContext();
+	
+	String value = (String) config.getInitParameter("php_request_uri_is_unique");
+	if ("on".equalsIgnoreCase(value) || "true".equalsIgnoreCase(value)) phpRequestURIisUnique = true;
+	
 	contextLoaderListener = (ContextLoaderListener) context.getAttribute(ContextLoaderListener.CONTEXT_LOADER_LISTENER);
 	serverInfo = config.getServletName(); if (serverInfo==null) serverInfo="FastCGIServlet";
 	
@@ -145,7 +154,11 @@ public class FastCGIServlet extends HttpServlet {
 	env.queryString = (String) req.getAttribute("javax.servlet.include.query_string");
 	if (env.queryString == null) env.queryString = req.getQueryString();
 
-	env.requestUri = (String) req.getAttribute("javax.servlet.include.request_uri");
+	if (phpRequestURIisUnique) { // use target: my.jsp:include||forward target.php => REQUEST_URI: target.php
+	    env.requestUri = (String) req.getAttribute("javax.servlet.include.request_uri");
+	} else {                     // use source: my.jsp:include||forward target.php => REQUEST_URI: my.jsp
+	    env.requestUri = (String) req.getAttribute("javax.servlet.forward.request_uri");
+	}
 	if (env.requestUri == null) env.requestUri = req.getRequestURI();
     }
     
@@ -230,8 +243,9 @@ public class FastCGIServlet extends HttpServlet {
 	env.environment.put("SERVER_SOFTWARE", Util.EXTENSION_NAME);
 	
 	String sPort = (String) env.environment.get("SERVER_PORT");
+	String standardPort = req.isSecure() ? _443 : _80;
 	StringBuffer httpHost = new StringBuffer((String)env.environment.get("SERVER_NAME"));
-	if (! "80".equals(sPort)) { // append port only if necessary, see Patch#3040838
+	if (! standardPort.equals(sPort)) { // append port only if necessary, see Patch#3040838
 	    httpHost.append(":");
 	    httpHost.append(sPort);
 	}
@@ -399,9 +413,13 @@ public class FastCGIServlet extends HttpServlet {
 	}
     }
 
+    protected Environment getEnvironment() {
+	return new Environment();
+    }
+    
     protected void execute(HttpServletRequest req, HttpServletResponse res) throws IOException, ServletException, InterruptedException {
 
-	Environment env = new Environment();
+	Environment env = getEnvironment();
 	setupRequestVariables(req, env);
 	setupCGIEnvironment(req, res, env);
 
