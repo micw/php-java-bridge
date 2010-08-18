@@ -66,11 +66,13 @@
 </tr>
 
 <tr VALIGN=TOP>
-<td WIDTH="25%">Report Generator (Eclipse BIRT)</td>
+<td>Report Generator (Eclipse BIRT)</td>
 
-<td WIDTH="25%"><a href="report.php">Execute</a></td>
+<td WIDTH="30%"><a href="report.php">Execute</a>
+ -- <a href="BIRTindex.php">More BIRT Examples</a></td>
+<td WIDTH="30%"><a href="source.php?source=report.php">Source</a></td>
+</tr>
 
-<td WIDTH="25%"><a href="source.php?source=report.php">Source</a></td>
 <td WIDTH="25%"><a href="debug.php"></a></td>
 </tr>
 
