@@ -24,7 +24,6 @@ package php.java.bridge.http;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import php.java.bridge.Util;
 
 /**
  * Constants and common procedures for FastCGI

@@ -420,7 +420,9 @@ abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements I
             writer.close();
             return cachedEmbeddedStandardHeader = out.toString(Util.ASCII);
         } catch (Exception e) {
-            throw new IOException("Cannot create standard header", e);
+	    IOException ex = new IOException("Cannot create standard header");
+	    ex.initCause(e);
+	    throw ex;
         }
     }
 

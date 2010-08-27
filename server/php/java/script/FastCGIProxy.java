@@ -48,7 +48,6 @@ import php.java.bridge.http.HeaderParser;
 import php.java.bridge.http.IFCGIProcess;
 import php.java.bridge.http.IFCGIProcessFactory;
 import php.java.bridge.http.OutputStreamFactory;
-import php.java.script.servlet.HttpFastCGIProxy;
 
 /**
  * This class can be used to run (and to connect to) a FastCGI server.

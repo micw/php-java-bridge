@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import php.java.servlet.fastcgi.FastCGIServlet;
-
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
  *

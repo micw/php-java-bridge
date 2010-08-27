@@ -36,7 +36,6 @@ import php.java.bridge.http.FCGIUtil;
 import php.java.bridge.http.HeaderParser;
 import php.java.bridge.http.OutputStreamFactory;
 import php.java.script.Continuation;
-import php.java.script.FastCGIProxy;
 import php.java.script.ResultProxy;
 
 /**

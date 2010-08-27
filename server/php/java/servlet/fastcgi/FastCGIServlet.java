@@ -45,7 +45,6 @@ import php.java.bridge.http.FCGIConnectionPool;
 import php.java.bridge.http.FCGIInputStream;
 import php.java.bridge.http.FCGIOutputStream;
 import php.java.bridge.http.FCGIUtil;
-import php.java.bridge.http.HeaderParser;
 import php.java.bridge.http.IContextFactory;
 import php.java.servlet.ContextLoaderListener;
 import php.java.servlet.PhpJavaServlet;
@@ -430,7 +429,9 @@ public class FastCGIServlet extends HttpServlet {
 		Util.logDebug("PHP FastCGI server failed: " + ex);
 		Util.printStackTrace(ex);
 	    }
-	    throw new IOException("PHP FastCGI server failed: ", ex);
+	    IOException ex2 = new IOException("PHP FastCGI server failed: ");
+	    ex2.initCause(ex);
+	    throw ex2;
 	} catch (FCGIConnectionException x) {
 	    Util.logError("PHP application terminated unexpectedly, have you started php-cgi with the environment setting PHP_FCGI_MAX_REQUESTS=" + contextLoaderListener.getPhpMaxRequests() + "?  Error: " + x);
 	    if(Util.logLevel>1) {

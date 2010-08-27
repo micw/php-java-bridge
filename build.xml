@@ -10,7 +10,9 @@
     <property name="sampleWebDir" value="${basedir}/examples/php+jsp" />
 
     <path id="compilePath">
-      <fileset dir="${libDir}" />
+      <fileset dir="${libDir}" >
+	<include name="*.jar" />
+      </fileset>
     </path>
 
     <mkdir dir="${distDir}" />
