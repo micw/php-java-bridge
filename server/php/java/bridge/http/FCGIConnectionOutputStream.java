@@ -56,12 +56,6 @@ public class FCGIConnectionOutputStream extends OutputStream {
     /**{@inheritDoc}*/  
     public void write(byte buf[], int off, int buflength) throws FCGIConnectionException {
 	try {
-	    /*
-	    for(int i=0; i<buflength; i++) {
-		System.err.print(Integer.toHexString(0xFF&buf[i+off]));
-		System.err.print(",");
-	    }
-	    */
 	    out.write(buf, off, buflength);
 	} catch (IOException ex) {
 	    throw new FCGIConnectionException(connection, ex);

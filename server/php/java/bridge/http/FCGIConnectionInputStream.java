@@ -56,9 +56,6 @@ public class FCGIConnectionInputStream extends InputStream {
     public int read(byte buf[], int off, int buflength) throws FCGIConnectionException {
 	try {
 	    int count = in.read(buf, off, buflength);
-	    /*
-	    System.err.println("\nread:" + count);
-	    */
 	    if(count==-1) {
 		connection.setIsClosed();
 	    }
