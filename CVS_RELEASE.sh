@@ -55,6 +55,6 @@ rm -rf $dirs
 cvs -Q update -APd 
 
 scp "php-java-bridge_`cat VERSION`_documentation.zip" "JavaBridgeTemplate`echo ${version}|sed 's/\.//g'`.war" jost_boekemeier,php-java-bridge@web.sf.net:"/home/pfs/project/p/ph/php-java-bridge/Binary\ package/php-java-bridge_`cat VERSION`/"
-scp dist/Java.inc dist/php-script.jar dist/JavaBridge.jar dist/servlet-api.jar jost_boekemeier,php-java-bridge@web.sf.net:"/home/pfs/project/p/ph/php-java-bridge/Binary\ package/php-java-bridge_`cat VERSION`/exploded/"
+scp dist/Java.inc dist/php-script.jar dist/JavaBridge.jar dist/script-api.jar jost_boekemeier,php-java-bridge@web.sf.net:"/home/pfs/project/p/ph/php-java-bridge/Binary\ package/php-java-bridge_`cat VERSION`/exploded/"
 
 scp "php-java-bridge_`cat VERSION`.tar.gz" jost_boekemeier,php-java-bridge@web.sf.net:"/home/pfs/project/p/ph/php-java-bridge/RHEL_FC\ SecurityEnhancedLinux/php-java-bridge_`cat VERSION`/"
