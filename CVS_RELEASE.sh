@@ -28,7 +28,7 @@ cp dist/*.war dist/src.zip .
 cp -r php_java_lib tests.php5 tests.jsr223 server
 
 cp JavaBridge.war JavaBridgeTemplate.war
-for i in 'META-INF/*' 'WEB-INF/lib/[^pJ]*.jar' 'WEB-INF/lib/poi.jar' 'WEB-INF/cgi/*' 'WEB-INF/web.xml' 'WEB-INF/platform/*' 'locale/*' 'java/*' '*.class' '*.jsp' '*.rpt*' '*.php'; do
+for i in 'META-INF/*' 'WEB-INF/lib/[^pJ]*.jar' 'WEB-INF/lib/poi.jar' 'WEB-INF/cgi/*' 'WEB-INF/web.xml' 'WEB-INF/platform/*' 'locale/*' '*.class' '*.jsp' '*.rpt*' '*.php'; do
   zip -d JavaBridgeTemplate.war "$i"; 
 done
 cat examples/php+jsp/settings.php | sed 3d >./index.php
@@ -53,3 +53,6 @@ zip -q -r php-java-bridge_${version}_documentation.zip $list
 mv JavaBridgeTemplate.war "JavaBridgeTemplate`echo ${version}|sed 's/\.//g'`.war"
 rm -rf $dirs
 cvs -Q update -APd 
+
+scp "php-java-bridge_`cat VERSION`_documentation.zip" "JavaBridgeTemplate`echo ${version}|sed 's/\.//g'`.war" jost_boekemeier,php-java-bridge@web.sf.net:"/home/pfs/project/p/ph/php-java-bridge/Binary\ package/php-java-bridge_`cat VERSION`/"
+scp dist/Java.inc dist/php-script.jar dist/JavaBridge.jar dist/servlet-api.jar jost_boekemeier,php-java-bridge@web.sf.net:"/home/pfs/project/p/ph/php-java-bridge/Binary\ package/php-java-bridge_`cat VERSION`/exploded"
