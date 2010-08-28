@@ -440,8 +440,8 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
 		    updateProcessEnvironment(conf);
 		    File wrapper = new File(cgiOsDir, "php-cgi.sh");
 		    if (!wrapper.exists()) {
-			byte[] data = ("#!/bin/sh\nchmod +x ./php-cgi-"+Util.osArch+"-"+Util.osName+"\n"+
-			"exec ./php-cgi -c php-cgi.ini \"$@\"").getBytes();
+			byte[] data = ("#!/bin/sh\nchmod +x ./"+Util.osArch+"-"+Util.osName+"/php-cgi\n"+
+			"exec ./"+Util.osArch+"-"+Util.osName+"/php-cgi -c ./"+Util.osArch+"-"+Util.osName+"/php-cgi.ini \"$@\"").getBytes();
 			OutputStream out = new FileOutputStream (wrapper);
 			out.write(data);
 			out.close();

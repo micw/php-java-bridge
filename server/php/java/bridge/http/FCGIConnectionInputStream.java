@@ -24,73 +24,61 @@ package php.java.bridge.http;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.InputStream;
 
 import php.java.bridge.NotImplementedException;
 import php.java.bridge.http.FCGIConnectionPool.Connection;
 
 /**
- * Default OutputStream used by the connection pool.
+ * Default InputStream used by the connection pool.
  * 
  * @author jostb
  *
  */
-public class FCGIConnectionOutputStream extends OutputStream {
+public class FCGIConnectionInputStream extends InputStream {
     protected Connection connection;
-    private BufferedOutputStream out;
-    
+    private InputStream in;
+
     protected void setConnection(Connection connection) throws FCGIConnectionException {
-        this.connection = connection;
-        try {
-	    this.out = new BufferedOutputStream(connection.channel.getOutputStream());
-        } catch (IOException e) {
-	    throw new FCGIConnectionException(connection, e);
-        }
-    }
-    /**{@inheritDoc}*/  
-    public void write(byte buf[]) throws FCGIConnectionException {
-        write(buf, 0, buf.length);
-    }
-    /**{@inheritDoc}*/  
-    public void write(byte buf[], int off, int buflength) throws FCGIConnectionException {
+	this.connection = connection;	  
 	try {
+	    this.in = connection.channel.getInputStream();
+	} catch (IOException e) {
+	    throw new FCGIConnectionException(connection, e);
+	}	  
+    }
+    /**{@inheritDoc}*/  
+    public int read(byte buf[]) throws FCGIConnectionException {
+	return read(buf, 0, buf.length);
+    }
+    /**{@inheritDoc}*/  
+    public int read(byte buf[], int off, int buflength) throws FCGIConnectionException {
+	try {
+	    int count = in.read(buf, off, buflength);
 	    /*
-	    for(int i=0; i<buflength; i++) {
-		System.err.print(Integer.toHexString(0xFF&buf[i+off]));
-		System.err.print(",");
-	    }
+	    System.err.println("\nread:" + count);
 	    */
-	    out.write(buf, off, buflength);
+	    if(count==-1) {
+		connection.setIsClosed();
+	    }
+	    return count;
 	} catch (IOException ex) {
 	    throw new FCGIConnectionException(connection, ex);
 	}
     }
     /**{@inheritDoc}*/  
-    public void write(int b) throws FCGIConnectionException {
-        throw new NotImplementedException();
-    }
+    public int read() throws FCGIConnectionException {
+	throw new NotImplementedException();
+    }      
     /**{@inheritDoc}*/  
     public void close() throws FCGIConnectionException {
-        try { 
-            flush();
-        } finally {
-            connection.state|=2;
-            if(connection.state==connection.ostate)
-		try {
-		    connection.close();
-		} catch (IOException e) {
-		    throw new FCGIConnectionException(connection, e);
-		}
-        }
-    }
-    /**{@inheritDoc}*/  
-    public void flush() throws FCGIConnectionException {
-        try {
-            out.flush();
-        } catch (IOException ex) {
-            throw new FCGIConnectionException(connection, ex);
-        }
+	connection.state|=1;
+	if(connection.state==connection.ostate)
+	    try {
+		connection.close();
+	    } catch (IOException e) {
+		throw new FCGIConnectionException(connection, e);
+	    }
     }
 }
