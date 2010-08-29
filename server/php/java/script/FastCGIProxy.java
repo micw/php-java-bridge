@@ -54,7 +54,7 @@ import php.java.bridge.http.OutputStreamFactory;
  *  
  * @author jostb
  *
- * @see HttpFastCGIProxy
+ * @see php.java.script.servlet.HttpFastCGIProxy
  */
 
 public class FastCGIProxy extends Continuation implements IFCGIProcessFactory {

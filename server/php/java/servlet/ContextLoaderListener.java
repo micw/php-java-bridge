@@ -65,7 +65,6 @@ import php.java.servlet.fastcgi.FCGIProcess;
  *&lt;/listener&gt;
  * </code>
  * </blockquote>
- * @see php.java.script.servlet.EngineFactory
  */
 public class ContextLoaderListener implements javax.servlet.ServletContextListener, IFCGIProcessFactory {
     private LinkedList closeables = new LinkedList();

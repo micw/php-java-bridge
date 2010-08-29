@@ -42,7 +42,7 @@ import php.java.script.ResultProxy;
   * This class can be used to connect to a FastCGI server.
  * 
  * @author jostb
- * @see FastCGIProxy
+ * @see php.java.script.FastCGIProxy
  */
 
 public class HttpFastCGIProxy extends Continuation {

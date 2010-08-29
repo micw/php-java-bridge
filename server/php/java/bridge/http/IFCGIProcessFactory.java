@@ -31,7 +31,7 @@ import java.util.Map;
 
 /**
  * Implementing classes are able to use the FastCGI machinery.
- * Currently implemented by {@link FastCGIServlet} and {@link FastCGIProxy}
+ * Currently implemented by {@link php.java.servlet.fastcgi.FastCGIServlet} and {@link php.java.script.FastCGIProxy}
  */
 public interface IFCGIProcessFactory {
     /** 

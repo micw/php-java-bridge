@@ -142,7 +142,6 @@ public abstract class FCGIConnectionFactory {
 
     /**
      * For backward compatibility the "JavaBridge" context uses the port 9667 (Linux/Unix) or <code>\\.\pipe\JavaBridge@9667</code> (Windogs).
-     * @param contextPath The path of the web context
      */
     public void initialize() {
 	setDynamicPort();
