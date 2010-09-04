@@ -40,7 +40,7 @@ import php.java.bridge.http.IContextFactory;
 /**
  * Wraps the J2EE session interface
  */
-class HttpSessionFacade implements ISession {
+final class HttpSessionFacade implements ISession {
 
     private HttpSession session;
     private int timeout;
@@ -54,7 +54,7 @@ class HttpSessionFacade implements ISession {
 	sessionCache.setMaxInactiveInterval(timeout);
 	return sessionCache;
     }
-    protected HttpSessionFacade (IContextFactory ctxFactory, ServletContext ctx, HttpServletRequest req, HttpServletResponse res, short clientIsNew, int timeout) {
+    private HttpSessionFacade (IContextFactory ctxFactory, ServletContext ctx, HttpServletRequest req, HttpServletResponse res, short clientIsNew, int timeout) {
 	this.ctxFactory = ctxFactory;
 	switch (clientIsNew) {
 		case ISession.SESSION_CREATE_NEW: 	this.session = req.getSession(true); 	break;
@@ -163,5 +163,15 @@ class HttpSessionFacade implements ISession {
     /**@inheritDoc*/
     public long getLastAccessedTime() {
       return getCachedSession().getLastAccessedTime();
+    }
+    public static ISession getFacade(
+	    IContextFactory factory,
+            ServletContext kontext, HttpServletRequest req,
+            HttpServletResponse res, short clientIsNew, int timeout) {
+	
+	if ((clientIsNew != ISession.SESSION_GET) || ((clientIsNew == ISession.SESSION_GET) && req.getSession(false) != null))
+	    return new HttpSessionFacade(factory, kontext, req, res, clientIsNew, timeout);
+	else
+	    return null;
     }
 }

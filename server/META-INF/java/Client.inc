@@ -634,12 +634,7 @@ class java_Client /* implements IDocHandler */ {
 	return $cache = $this->invokeMethod(0, "getContext", array());
   }
   function getSession($args) {
-	static $cache = null;
-	if (!is_null($cache)) {
-	  trigger_error("java_session() should be called once at the beginning of the script", E_USER_WARNING);	  
-	  return $cache;
-	}
-	return $cache = $this->invokeMethod(0, "getSession", $args);
+	return $this->invokeMethod(0, "getSession", $args);
   }
   function getServerName() {
 	static $cache = null;

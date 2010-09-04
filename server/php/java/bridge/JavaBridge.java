@@ -1496,7 +1496,6 @@ public class JavaBridge implements Runnable {
 	if(contextCache!=null) return contextCache;
     	return contextCache = sessionFactory.getContext();
     }
-    private ISession sessionCache = null;
     /**
      * Return a session handle shared among all JavaBridge
      * instances. If it is a HTTP session, the session is shared with
@@ -1510,11 +1509,8 @@ public class JavaBridge implements Runnable {
      */
     public ISession getSession(String name, short clientIsNew, int timeout) throws Exception {
         if (timeout == 0) timeout = -1;
-	if(sessionCache!=null) return sessionCache;
 	try {
-	    ISession session= sessionFactory.getSession(name, clientIsNew, timeout);
-	    if(session==null) throw new NullPointerException("session is null");
-	    return sessionCache = session;
+	    return sessionFactory.getSession(name, clientIsNew, timeout);
 	} catch (Exception t) {
 	    printStackTrace(t);
 	    throw t;
@@ -1860,7 +1856,6 @@ public class JavaBridge implements Runnable {
      */
     public void recycle() {
 	this.contextCache = null;
-	this.sessionCache = null;
         globalRef = new GlobalRef();
 	
         options.recycle();
