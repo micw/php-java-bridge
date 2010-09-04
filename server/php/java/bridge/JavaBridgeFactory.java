@@ -48,12 +48,12 @@ public abstract class JavaBridgeFactory implements IJavaBridgeFactory {
     /**
      * Return a session for the JavaBridge
      * @param name The session name. If name is null, the name PHPSESSION will be used.
-     * @param clientIsNew true if the client wants a new session
+     * @param clientIsNew one of {@link ISession#SESSION_CREATE_NEW} {@link ISession#SESSION_GET_OR_CREATE} or {@link ISession#SESSION_GET}
      * @param timeout timeout in seconds. If 0 the session does not expire.
      * @return The session
      * @see php.java.bridge.ISession
      */
-    public abstract ISession getSession(String name, boolean clientIsNew, int timeout);
+    public abstract ISession getSession(String name, short clientIsNew, int timeout);
 
     /**
      * Return the associated JSR223 context

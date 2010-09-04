@@ -154,11 +154,11 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
         this.visited=visited;
     }
     /**{@inheritDoc}*/
-    public ISession getSession(String name, boolean clientIsNew, int timeout) {
+    public ISession getSession(String name, short clientIsNew, int timeout) {
 	return getSimpleSession(name, clientIsNew, timeout);
     }
     /**{@inheritDoc}*/
-    public ISession getSimpleSession(String name, boolean clientIsNew, int timeout) {
+    public ISession getSimpleSession(String name, short clientIsNew, int timeout) {
 	if (name!=null) return visited.getSimpleSession(name, clientIsNew, timeout);
 	if(session != null) return session;
 	return session = visited.getSimpleSession(name, clientIsNew, timeout);

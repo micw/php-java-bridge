@@ -69,7 +69,7 @@ public class SimpleServletContextFactory extends php.java.bridge.http.SimpleCont
 	throw new IllegalStateException("Named sessions not supported by servlet.");
     }
     /**{@inheritDoc}*/
-    public ISession getSession(String name, boolean clientIsNew, int timeout) {
+    public ISession getSession(String name, short clientIsNew, int timeout) {
 	 // if name != null return a "named" php session which is not shared with jsp
 	if(name!=null) return getSimpleSession(name, clientIsNew, timeout);
 	

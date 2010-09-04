@@ -68,6 +68,12 @@ import java.util.Map;
  * }<br>
  */
 public interface ISession {
+    /** Get an existing session or create one */
+    public static final short SESSION_GET_OR_CREATE = 0;
+    /** Create a new session */
+    public static final short SESSION_CREATE_NEW = 1;
+    /** Get an existing session */
+    public static final short SESSION_GET = 2;
     /**
      * Returns the object bound to the given name in the session's
      * context layer data.  Returns null if there is no such

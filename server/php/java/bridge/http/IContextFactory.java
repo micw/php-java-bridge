@@ -102,7 +102,7 @@ public interface IContextFactory extends IJavaBridgeFactory {
    * @return The session
    * @see php.java.bridge.ISession
    */
-   public ISession getSession(String name, boolean clientIsNew, int timeout);
+   public ISession getSession(String name, short clientIsNew, int timeout);
 
    /**
     * @param name The session name. If name is null, the name PHPSESSION will be used.
@@ -111,7 +111,7 @@ public interface IContextFactory extends IJavaBridgeFactory {
     * @return The session
     * @see php.java.bridge.ISession
     */
-    public ISession getSimpleSession(String name, boolean clientIsNew, int timeout);
+    public ISession getSimpleSession(String name, short clientIsNew, int timeout);
 
    /**
     * Called when the context runner starts

@@ -54,9 +54,14 @@ class HttpSessionFacade implements ISession {
 	sessionCache.setMaxInactiveInterval(timeout);
 	return sessionCache;
     }
-    protected HttpSessionFacade (IContextFactory ctxFactory, ServletContext ctx, HttpServletRequest req, HttpServletResponse res, boolean clientIsNew, int timeout) {
+    protected HttpSessionFacade (IContextFactory ctxFactory, ServletContext ctx, HttpServletRequest req, HttpServletResponse res, short clientIsNew, int timeout) {
 	this.ctxFactory = ctxFactory;
-	this.session = clientIsNew? req.getSession(true) : req.getSession();
+	switch (clientIsNew) {
+		case ISession.SESSION_CREATE_NEW: 	this.session = req.getSession(true); 	break;
+		case ISession.SESSION_GET_OR_CREATE: 	this.session = req.getSession(); 	break;
+		case ISession.SESSION_GET: 		this.session = req.getSession(false); 	break;
+		default: 				throw new IllegalStateException("clientIsNew:"+clientIsNew);
+	}
 	this.timeout = timeout;
 	this.isNew = session.isNew();
     }

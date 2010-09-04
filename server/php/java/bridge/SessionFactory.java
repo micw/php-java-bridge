@@ -59,7 +59,7 @@ public class SessionFactory extends JavaBridgeFactory {
       }
   }
     
-  private ISession session(String name, boolean clientIsNew, int timeout) {
+  private ISession session(String name, short clientIsNew, int timeout) {
 	synchronized(JavaBridge.sessionHash) {
 	    Session ref = null;
 	    if(!JavaBridge.sessionHash.containsKey(name)) {
@@ -67,7 +67,7 @@ public class SessionFactory extends JavaBridgeFactory {
 		JavaBridge.sessionHash.put(name, ref);
 	    } else {
 		ref = (Session) JavaBridge.sessionHash.get(name);
-		if(clientIsNew) { // client side gc'ed, destroy server ref now!
+		if(clientIsNew == ISession.SESSION_CREATE_NEW) { // client side gc'ed, destroy server ref now!
 		    ref.destroy();
 		    ref = new Session(name);
 		    JavaBridge.sessionHash.put(name, ref);
@@ -83,12 +83,12 @@ public class SessionFactory extends JavaBridgeFactory {
   /**
    * Return a session.
    * @param name The session name. If name is null, the name PHPSESSION will be used.
-   * @param clientIsNew true if the client wants a new session
+   * @param clientIsNew one of {@link ISession#SESSION_CREATE_NEW} {@link ISession#SESSION_GET_OR_CREATE} or {@link ISession#SESSION_GET}
    * @param timeout timeout in seconds. If 0 the session does not expire.
    * @return The session
    * @see php.java.bridge.ISession
    */
-  public ISession getSession(String name, boolean clientIsNew, int timeout) {
+  public ISession getSession(String name, short clientIsNew, int timeout) {
 	if(name==null) name=JavaBridge.PHPSESSION; else name="@"+name;
 	return session(name, clientIsNew, timeout);
   }

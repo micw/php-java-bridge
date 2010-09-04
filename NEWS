@@ -5,6 +5,10 @@ Please send bug reports, questions and suggestions to
 
 Version 6.2.1
 
+* java_session(null, false) now returns false if a session does not exist.
+
+* Added new BIRT version 2.6
+
 * Incompatible change for those who use $_SERVER["REQUEST_URI"] as a cache key.
   Please either use PHP_SELF or please set 
     <init-param>
@@ -13,17 +17,12 @@ Version 6.2.1
     </init-param>
   
 
-* $s = new java("java.lang.String", "hello");
+* A (string) cast no longer converts a byte[] array to a 
+  java.lang.String. Example:
+ 
+  $s = new java("java.lang.String", "hello");
   $b = $s->getBytes("ASCII");
   echo (string)$b;
-  
-  The (string) cast no longer converts the byte[] array to a 
-  java.lang.String using the encoding set with
-  java_set_file_encoding() but returns the byte[] array as a 
-  PHP string directly.
-  
-  In previous versions one had to use java_cast($b, "string") 
-  to do a binary-safe conversion from byte[] to PHP string.
   
     
 * To support both x64 and 386 windows dll's, the layout has been changed:

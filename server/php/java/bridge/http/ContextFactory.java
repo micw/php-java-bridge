@@ -328,7 +328,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * @param timeout expires in n seconds
      * @return The session
      */
-    public ISession getSimpleSession(String name, boolean clientIsNew, int timeout) {
+    public ISession getSimpleSession(String name, short clientIsNew, int timeout) {
         return super.getSession(name, clientIsNew, timeout);
     }
     /**
@@ -338,7 +338,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * @param timeout expires in n seconds
      * @return The session
      */
-    public ISession getSession(String name, boolean clientIsNew, int timeout) {
+    public ISession getSession(String name, short clientIsNew, int timeout) {
 	return visitor.getSession(name, clientIsNew, timeout);
     }
     /**{@inheritDoc}*/  

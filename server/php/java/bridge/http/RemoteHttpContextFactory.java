@@ -150,7 +150,7 @@ public class RemoteHttpContextFactory extends SessionFactory implements IContext
    }
 
    /**{@inheritDoc}*/
-   public ISession getSimpleSession(String name, boolean clientIsNew,
+   public ISession getSimpleSession(String name, short clientIsNew,
            int timeout) {
 	return super.getSession(name, clientIsNew, timeout);
    }

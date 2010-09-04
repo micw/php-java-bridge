@@ -34,15 +34,16 @@ import php.java.bridge.http.IContext;
  * Create {@link JavaBridge}, {@link IContext} and {@link ISession} instances.
  */
 public interface IJavaBridgeFactory {
+    
     /**
      * Return a session for the JavaBridge
      * @param name The session name. If name is null, the name PHPSESSION will be used.
-     * @param clientIsNew true if the client wants a new session
+     * @param clientIsNew one of {@link ISession#SESSION_CREATE_NEW} {@link ISession#SESSION_GET_OR_CREATE} or {@link ISession#SESSION_GET}
      * @param timeout timeout in seconds. If 0 the session does not expire.
      * @return The session
      * @see php.java.bridge.ISession
      */
-    public ISession getSession(String name, boolean clientIsNew, int timeout);
+    public ISession getSession(String name, short clientIsNew, int timeout);
     /**
      * Return the associated JSR223 context
      * @return The JSR223 context, if supported by the environment or null.

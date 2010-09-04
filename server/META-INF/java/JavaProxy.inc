@@ -365,7 +365,14 @@ function java_get_lifetime ()
 function java_session_array($args) {
   $client=__javaproxy_Client_getClient();
   if(!isset($args[0])) $args[0]=null;
-  if(!isset($args[1])) $args[1]=false;
+
+  if(!isset($args[1])) 
+    $args[1]=0; // ISession.SESSION_GET_OR_CREATE
+  elseif ($args[1]===true)
+    $args[1]=1; // ISession.SESSION_CREATE_NEW
+  else
+    $args[1]=2; // ISession.SESSION_GET
+    
   if(!isset($args[2])) {
 	$args[2] = java_get_lifetime ();
   }

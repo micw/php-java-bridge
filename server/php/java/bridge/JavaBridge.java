@@ -1508,7 +1508,7 @@ public class JavaBridge implements Runnable {
      * @throws Exception 
      * @see php.java.bridge.ISession
      */
-    public ISession getSession(String name, boolean clientIsNew, int timeout) throws Exception {
+    public ISession getSession(String name, short clientIsNew, int timeout) throws Exception {
         if (timeout == 0) timeout = -1;
 	if(sessionCache!=null) return sessionCache;
 	try {
@@ -1639,7 +1639,7 @@ public class JavaBridge implements Runnable {
      * @throws IllegalArgumentException if serialID does not exist anymore.
      */
     public int deserialize(String serialID, int timeout) throws IllegalArgumentException {
-	ISession session = sessionFactory.getSession(JavaBridge.INTERNAL_PHPSESSION, false, timeout);
+	ISession session = sessionFactory.getSession(JavaBridge.INTERNAL_PHPSESSION, ISession.SESSION_GET_OR_CREATE, timeout);
 	Object obj = session.get(serialID);
 	if(obj==null) throw new IllegalArgumentException("Session serialID " +  serialID + " expired.");
 	return globalRef.append(castToExact(obj));
@@ -1658,7 +1658,7 @@ public class JavaBridge implements Runnable {
      */
     public String serialize(Object obj, int timeout) throws IllegalArgumentException {
 	if(obj==null) obj=Request.PHPNULL;
-    	ISession session = sessionFactory.getSession(JavaBridge.INTERNAL_PHPSESSION, false, timeout);
+    	ISession session = sessionFactory.getSession(JavaBridge.INTERNAL_PHPSESSION, ISession.SESSION_GET_OR_CREATE, timeout);
     	String id = Integer.toHexString(getSerialID());
     	session.put(id, obj);
     	return (String)castToString(id);
@@ -1870,7 +1870,6 @@ public class JavaBridge implements Runnable {
         /* resets the currentThreadContextClassLoader from the bridge's loader */
         sessionFactory.recycle();
         
-        // TODO: recycle common entries such as bridge.require(), etc.
         methodCache.clear();
         constructorCache.clear();
         stringCache.clear();

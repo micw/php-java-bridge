@@ -115,12 +115,12 @@ public class RemoteHttpServletContextFactory extends JavaBridgeFactory implement
 	return id;
     }
     /**{@inheritDoc}*/
-    public ISession getSimpleSession(String name, boolean clientIsNew,
+    public ISession getSimpleSession(String name, short clientIsNew,
             int timeout) {
 	throw new IllegalStateException("Named sessions not supported by servlet.");
     }
     /**{@inheritDoc}*/
-    public ISession getSession(String name, boolean clientIsNew, int timeout) {
+    public ISession getSession(String name, short clientIsNew, int timeout) {
 	 // if name != null return a "named" php session which is not shared with jsp
 	if(name!=null) return getSimpleSession(name, clientIsNew, timeout);
 
@@ -218,7 +218,7 @@ public class RemoteHttpServletContextFactory extends JavaBridgeFactory implement
 	    public HttpSession getSession(boolean clientIsNew) {
 		HttpSession session = getSession();
 		if(clientIsNew && !session.isNew())
-		    throw new IllegalStateException("To obtain a new session call java_session() or \"java_session(null, -1, TRUE)\" at the beginning of your PHP script.");
+		    throw new IllegalStateException("To obtain a new session call java_session() at the beginning of your PHP script.");
 		return session;
 	    }
 	    

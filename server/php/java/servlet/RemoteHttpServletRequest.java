@@ -28,7 +28,7 @@ final class RemoteHttpServletRequest extends HttpServletRequestWrapper {
     public HttpSession getSession(boolean clientIsNew) {
 	HttpSession session = getSession();
 	if(clientIsNew && !session.isNew())
-	    throw new IllegalStateException("To obtain a new session call java_session(null, -1, TRUE) at the beginning of your PHP script.");
+	    throw new IllegalStateException("To obtain a new session call java_session(null, true) at the beginning of your PHP script.");
 	return session;
     }
 

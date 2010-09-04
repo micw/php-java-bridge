@@ -33,7 +33,7 @@ import javax.servlet.http.HttpServletResponse;
  * objects are set to null.
  */
 class RemoteHttpSessionFacade extends HttpSessionFacade {
-    protected RemoteHttpSessionFacade (SimpleServletContextFactory ctxFactory, ServletContext ctx, HttpServletRequest req, HttpServletResponse res, boolean clientIsNew, int timeout) {
+    protected RemoteHttpSessionFacade (SimpleServletContextFactory ctxFactory, ServletContext ctx, HttpServletRequest req, HttpServletResponse res, short clientIsNew, int timeout) {
 	super(ctxFactory, ctx, req, res, clientIsNew, timeout);
     }
 }
