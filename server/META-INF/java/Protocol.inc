@@ -506,7 +506,7 @@ class java_SimpleHttpTunnelHandler extends java_SimpleHttpHandler  {
 	$code = ((int)$ar[1]);
 	if  ($code != 200) $this->headers["http_error"] = $code;
 
-	while (($str = trim(fgets($this->socket, JAVA_RECV_SIZE)))) { echo "XXX:::" . $str."\n";
+	while (($str = trim(fgets($this->socket, JAVA_RECV_SIZE)))) {
 	  if($str[0]=='X') {
 		if(!strncasecmp("X_JAVABRIDGE_REDIRECT", $str, 21)) {
 		  $this->headers["redirect"]=trim(substr($str, 22));
