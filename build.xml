@@ -234,8 +234,8 @@
       <fileset dir="${sampleWebDir}">
 	<include name="*.php" />
 	<include name="*.jsp" />
-    	<include name="*.rptdesign" />
-    	<include name="*.rptlibrary" />
+    	<include name="**/*.rptdesign" />
+    	<include name="**/*.rptlibrary" />
 	<include name="locale/**/*" />
       </fileset>
       <fileset dir="${basedir}">

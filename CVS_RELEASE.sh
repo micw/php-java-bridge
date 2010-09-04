@@ -31,8 +31,8 @@ cp JavaBridge.war JavaBridgeTemplate.war
 for i in 'META-INF/*' 'WEB-INF/lib/[^pJ]*.jar' 'WEB-INF/lib/poi.jar' 'WEB-INF/cgi/*' 'WEB-INF/web.xml' 'WEB-INF/platform/*' 'locale/*' '*.class' '*.jsp' '*.rpt*' '*.php'; do
   zip -d JavaBridgeTemplate.war "$i"; 
 done
-cat examples/php+jsp/settings.php | sed 3d >./index.php
-echo '<?php phpinfo();echo "<br><hr><br>"; echo java("java.lang.System")->getProperties(); ?>' >test.php
+cat examples/php+jsp/settings.php >./index.php
+echo '<?php phpinfo();?>' >test.php
 rm -rf WEB-INF; mkdir WEB-INF
 cp server/example-web.xml WEB-INF/web.xml
 zip JavaBridgeTemplate.war index.php test.php
