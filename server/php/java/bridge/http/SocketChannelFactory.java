@@ -54,6 +54,9 @@ class SocketChannelFactory extends FCGIConnectionFactory {
 	    testSocket = new Socket(InetAddress.getByName(getName()), port);
 	    testSocket.close();
 	} catch (IOException e) {
+	    if (lastException != null) {
+		throw new FCGIConnectException(String.valueOf(e), lastException);
+	    }
 	    throw new FCGIConnectException(e);
 	}
     }

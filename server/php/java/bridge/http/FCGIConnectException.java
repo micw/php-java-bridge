@@ -29,7 +29,13 @@ import java.io.IOException;
 public class FCGIConnectException extends IOException {
     private static final long serialVersionUID = 5242564093021250550L;
     protected FCGIConnectException(IOException ex) {
-        super();
+        super("Could not connect to server");
         initCause(ex);
+    }
+    protected FCGIConnectException(String reason, Exception ex) {
+        super("Could not connect to server");
+	IOException e = new IOException(reason);
+	e.initCause(ex);
+        initCause(e);
     }
 }

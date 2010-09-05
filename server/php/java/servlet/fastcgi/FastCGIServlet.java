@@ -126,7 +126,14 @@ public class FastCGIServlet extends HttpServlet {
 	documentRoot = ServletUtil.getRealPath(context, "");
 	serverSignature = context.getServerInfo();
 	connectionPool = contextLoaderListener.getConnectionPool();
-	if (connectionPool == null) throw new ServletException("No connection pool");
+	if (connectionPool == null) {
+	    try {
+		contextLoaderListener.getChannelName().test();
+	    } catch (FCGIConnectException e) {
+		throw new ServletException(e);
+	    }
+	    throw new ServletException("No connection pool");
+	}
     }
     
     

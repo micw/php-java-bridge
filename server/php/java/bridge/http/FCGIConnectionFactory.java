@@ -45,6 +45,7 @@ public abstract class FCGIConnectionFactory {
     protected IFCGIProcess proc = null;
     private boolean fcgiStarted = false;
     private final Object fcgiStartLock = new Object();
+    protected Exception lastException;
     
     /**
      * Create a new FCGIConnectionFactory using a FCGIProcessFactory
@@ -92,7 +93,10 @@ public abstract class FCGIConnectionFactory {
 	    InputStream in = proc.getErrorStream();
 	    while((c=in.read(buf))!=-1) System.err.write(buf, 0, c);
 	    try { in.close(); } catch (IOException e) {/*ignore*/}
-	} catch (Exception e) {System.err.println("Could not start FCGI server: " + e);};
+	} catch (Exception e) {
+	    lastException = e;
+	    System.err.println("Could not start FCGI server: " + e);
+	};
     }
 
     protected abstract Process doBind(Map env, String php, boolean includeJava) throws IOException;

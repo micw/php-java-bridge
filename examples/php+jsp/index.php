@@ -62,19 +62,17 @@
 <td WIDTH="25%"><a href="excel.php">Execute</a></td>
 
 <td WIDTH="25%"><a href="source.php?source=excel.php">Source</a></td>
-<td WIDTH="25%"><a href="debug.php?source=excel.php"></a></td>
+<td WIDTH="25%"><a href="debug.php?source=excel.php">PDB JavaScript (beta!)</a></td>
 </tr>
 
 <tr VALIGN=TOP>
-<td>Report Generator (Eclipse BIRT)</td>
+<td WIDTH="25%">Report Generator (Eclipse BIRT)</td>
 
-<td WIDTH="30%"><a href="report.php">Execute</a>
- -- <a href="BIRTindex.php">More BIRT Examples</a></td>
-<td WIDTH="30%"><a href="source.php?source=report.php">Source</a></td>
+<td WIDTH="25%"><a href="report.php">Execute</a></td>
+<td WIDTH="25%"><a href="source.php?source=report.php">Source</a></td>
+<td WIDTH="25%"><a href="BIRTindex.php">more BIRT examples ...</a></td>
 </tr>
 
-<td WIDTH="25%"><a href="debug.php"></a></td>
-</tr>
 
 <tr VALIGN=TOP>
 <td WIDTH="25%">Include output of local JSP resource</td>

@@ -58,7 +58,13 @@ public class NPChannelFactory extends FCGIConnectionFactory {
      * @throws FCGIConnectException
      */
     public void test() throws FCGIConnectException {
-	if(!new File(raPath).canWrite()) throw new FCGIConnectException(new IOException("File " + raPath + " not writable"));
+	if(!new File(raPath).canWrite()){
+	    String reason = "File " + raPath + " not writable";
+	    if (lastException != null) {
+		throw new FCGIConnectException(reason, lastException);
+	    }
+	    throw new FCGIConnectException(new IOException(reason));
+	}
     }
     private NPChannel doConnect() throws FCGIConnectException {
 	try {

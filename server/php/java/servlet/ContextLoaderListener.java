@@ -182,7 +182,7 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
 	channelName.findFreePort(canStartFCGI);
 
 	try {
-	    fcgiConnectionPool= createConnectionPool(php_fcgi_connection_pool_size_number);
+	    fcgiConnectionPool = createConnectionPool(php_fcgi_connection_pool_size_number);
 	} catch (FCGIConnectException e) {
 	    Util.printStackTrace(e);
 	}
