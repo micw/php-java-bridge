@@ -261,6 +261,7 @@
       <webinf dir="${javaBaseDir}/WEB-INF">
 	<include name="cgi/**/*" />
 	<include name="cgi/README" />
+	<exclude name="cgi/launcher.*"/>
       </webinf>
       <webinf dir="${libDir}">
 	<include name="platform/**/*" />
