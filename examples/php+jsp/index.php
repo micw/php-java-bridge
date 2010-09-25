@@ -62,7 +62,7 @@
 <td WIDTH="25%"><a href="excel.php">Execute</a></td>
 
 <td WIDTH="25%"><a href="source.php?source=excel.php">Source</a></td>
-<td WIDTH="25%"><a href="debug.php?source=excel.php">PDB JavaScript (beta!)</a></td>
+<td WIDTH="25%"><a href="debug.php?source=excel.php"></a></td>
 </tr>
 
 <tr VALIGN=TOP>

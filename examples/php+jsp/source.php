@@ -1,5 +1,5 @@
 <?php
 
-show_source($_GET["source"]);
+show_source(basename($_GET["source"]));
 
 ?>
