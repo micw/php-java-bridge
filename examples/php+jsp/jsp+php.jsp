@@ -1,5 +1,5 @@
 <%@page import="javax.script.*" %>
-<%@page import="php.java.script.servlet.PhpCompiledHttpScriptContext" %>
+<%@page import="php.java.script.servlet.PhpHttpScriptContext" %>
 
 <%!
 private static final CompiledScript script;
