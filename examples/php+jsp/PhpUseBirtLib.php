@@ -1,8 +1,10 @@
 <?php
 
-define ("JAVA_HOSTS", "127.0.0.1:8080");
-define ("JAVA_SERVLET", "/JavaBridge/JavaBridge.phpjavabridge");
-$pth = "http://" . $_SERVER["HTTP_HOST"] . $_SERVER["REQUEST_URI"];
+if (!(get_cfg_var('java.web_inf_dir'))) {
+  define ("JAVA_HOSTS", "127.0.0.1:8080");
+  define ("JAVA_SERVLET", "/JavaBridge/JavaBridge.phpjavabridge");
+}
+$pth = "http://" . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"];
 $path_parts = pathinfo($pth);
 $imageURLPrefix = $path_parts['dirname'] ."/sessionChartImages/";
 require_once("java/Java.inc");

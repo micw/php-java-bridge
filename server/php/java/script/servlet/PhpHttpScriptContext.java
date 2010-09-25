@@ -1,6 +1,6 @@
-/*-*- mode: Java; tab-width:8 -*-*/
-
 package php.java.script.servlet;
+
+/*-*- mode: Java; tab-width:8 -*-*/
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -27,6 +27,8 @@ import php.java.script.IPhpScriptContext;
 import php.java.script.PhpScriptContextDecorator;
 import php.java.script.PhpScriptWriter;
 import php.java.script.ResultProxy;
+import php.java.script.servlet.HttpFastCGIProxy;
+import php.java.script.servlet.PhpScriptLogWriter;
 import php.java.servlet.ContextLoaderListener;
 import php.java.servlet.ServletUtil;
 
@@ -67,14 +69,14 @@ import php.java.servlet.ServletUtil;
  * @author jostb
  *
  */
-public class PhpCompiledHttpScriptContext extends PhpScriptContextDecorator {
+public class PhpHttpScriptContext extends PhpScriptContextDecorator {
 
     /**
      * Create a new PhpCompiledScriptContext using an existing
      * PhpScriptContext
      * @param ctx the script context to be decorated
      */
-    public PhpCompiledHttpScriptContext(ScriptContext ctx, Servlet servlet, ServletContext context, HttpServletRequest request, HttpServletResponse response) {
+    public PhpHttpScriptContext(ScriptContext ctx, Servlet servlet, ServletContext context, HttpServletRequest request, HttpServletResponse response) {
 	super((IPhpScriptContext)ctx);
 	this.request = request;
 	this.response = response;

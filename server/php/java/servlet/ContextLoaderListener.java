@@ -327,7 +327,7 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
 	    } catch (Exception e) {
 		e.printStackTrace();
 	    }
-
+/* no longer part of the PHP/Java Bridge
 	    File phpDebuggerFile = new File (javaDir, "PHPDebugger.php");
 	    try {
 		if (!phpDebuggerFile.exists()) {
@@ -340,7 +340,7 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
 	    } catch (Exception e) {
 		e.printStackTrace();
 	    }
-	    
+*/	    
 	    File javaProxyFile = new File (javaDir, "JavaProxy.php");
 	    try {
 		if (!javaProxyFile.exists()) {
