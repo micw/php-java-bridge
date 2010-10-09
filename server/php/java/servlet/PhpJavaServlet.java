@@ -234,7 +234,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	res.setHeader("Keep-Alive", keepAliveParam);
 	
 	try {
-	    ctx.getBridge().handleRequestsInternal(req.getInputStream(), res.getOutputStream());
+	    ctx.getBridge().handleRequests(req.getInputStream(), res.getOutputStream());
 	} finally {
 	    ctx.destroy();
 	}

@@ -300,8 +300,7 @@ public final class Response {
    		    writeVoid();
   		else { Util.logFatal("Unknown type"); writeObject(value); }
 	    } else if(value instanceof PhpString) {//  No need to check for Request.PhpNumber, this cannot happen.
-		if(value==null) writeNull();
-		else writeString(((PhpString)value).getBytes());
+		writeString(((PhpString)value).getBytes());
 	    } else if(!delegate.setResult(value)) {
 		writeObject(value);
 	    }

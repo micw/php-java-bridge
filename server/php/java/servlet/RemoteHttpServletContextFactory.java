@@ -37,7 +37,6 @@ import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import php.java.bridge.ILogger;
 import php.java.bridge.ISession;
 import php.java.bridge.JavaBridgeFactory;
 import php.java.bridge.Request;
@@ -260,6 +259,6 @@ public class RemoteHttpServletContextFactory extends JavaBridgeFactory implement
     * </blockquote>
     */
    public void handleRequests(InputStream in, OutputStream out) throws IOException {
-       getBridge().handleRequests(in, out, (ILogger) ContextLoaderListener.getContextLoaderListener(kontext).getLogger());
+       getBridge().handleRequests(in, out);
    }
 }

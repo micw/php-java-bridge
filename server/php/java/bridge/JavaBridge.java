@@ -106,6 +106,7 @@ public class JavaBridge implements Runnable {
      * @param out the OutputStream
      * @param logger the default logger can be obtained via <code>getServletContext().getAttribute(ContextLoaderListener.LOGGER)</code>
      * @throws IOException
+     * @deprecated 
      * Example:
      * <blockquote>
      * <code>
@@ -120,12 +121,27 @@ public class JavaBridge implements Runnable {
      * </blockquote>
      */
     public void handleRequests (InputStream in, OutputStream out, ILogger logger) throws IOException {
-	    handleRequestsInternal(in, out);
+	    handleRequests(in, out);
     }
     /**
-     * Only for internal use. Use {@link #handleRequests(InputStream, OutputStream, ILogger)} instead.
+     * Handle requests from the InputStream, write the responses to OutputStream
+     * @param in the InputStream
+     * @param out the OutputStream
+     * @throws IOException
+     * Example:
+     * <blockquote>
+     * <code>
+     * protected void doPut (HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException { <br>
+     * &nbsp;&nbsp;IContextFactory ctx = new RemoteHttpServletContextFactory(this, getServletContext(), req, req, resr);<br>
+     * &nbsp;&nbsp;res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());<br>
+     * &nbsp;&nbsp;res.setHeader("Pragma", "no-cache");<br>
+     * &nbsp;&nbsp;res.setHeader("Cache-Control", "no-cache");<br>
+     * &nbsp;&nbsp;try { ctx.getBridge().handleRequests(req.getInputStream(), res.getOutputStream(), myLogge); } finally { ctx.destroy(); }<br>
+     * }
+     * </code>
+     * </blockquote>
      */
-   public void handleRequestsInternal (InputStream in, OutputStream out) throws IOException {
+   public void handleRequests (InputStream in, OutputStream out) throws IOException {
 	this.request = new Request(this);
 	this.in = in;
 	this.out = out;

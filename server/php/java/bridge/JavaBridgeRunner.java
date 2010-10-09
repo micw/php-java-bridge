@@ -204,7 +204,7 @@ public class JavaBridgeRunner extends HttpServer {
 	res.setHeader("Pragma", "no-cache");
 	res.setHeader("Keep-Alive", "timeout=-1, max=-1");
 	try {
-	    ctx.getBridge().handleRequestsInternal(sin, sout);
+	    ctx.getBridge().handleRequests(sin, sout);
 	    sin.eof();
 	    sout.eof();
 	} finally {
