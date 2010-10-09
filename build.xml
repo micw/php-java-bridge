@@ -72,6 +72,7 @@
       <metainf dir="${javaBaseDir}/META-INF">
 	<include name="java/*.inc" />
 	<include name="java/*.php" />
+   	<include name="SSLServerSocketHelperKeystore" />
       </metainf>
     </jar>
   </target>

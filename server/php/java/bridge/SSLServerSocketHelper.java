@@ -25,16 +25,39 @@ package php.java.bridge;
  */
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.KeyStore;
 
 import javax.net.ServerSocketFactory;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocketFactory;
 
 class SSLServerSocketHelper {
+    private static final char[] KEYSTORE_PASSWORD = "123456".toCharArray();
     public static final ISocketFactory bind(final int port, final int backlog, final boolean isLocal) throws IOException {
-	ServerSocketFactory ssocketFactory = SSLServerSocketFactory.getDefault(); 
+	ServerSocketFactory ssocketFactory = null;
+	if (System.getProperty("javax.net.ssl.keyStore", null) == null) {
+    	    try {
+    		SSLContext sslContext = SSLContext.getInstance( "TLS" );
+    		KeyManagerFactory km = KeyManagerFactory.getInstance("SunX509");
+    		KeyStore ks = KeyStore.getInstance("JKS");
+    		InputStream in = SSLServerSocketHelper.class.getClassLoader().getResourceAsStream("META-INF/SSLServerSocketHelperKeystore");
+    		ks.load(in, KEYSTORE_PASSWORD);
+    		km.init(ks, KEYSTORE_PASSWORD);
+    		sslContext.init(km.getKeyManagers(), null, null);
+    		ssocketFactory = sslContext.getServerSocketFactory();
+    	    } catch (Exception e) {
+    		e.printStackTrace();
+    	    }
+	}
+	if (ssocketFactory == null)
+	    ssocketFactory = SSLServerSocketFactory.getDefault(); 
+	
+	
 	final ServerSocket ssocket = 
 	    isLocal ? 
 		    ssocketFactory.createServerSocket(port, backlog, InetAddress.getByName("127.0.0.1")) :
