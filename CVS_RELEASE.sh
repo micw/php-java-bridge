@@ -37,6 +37,7 @@ rm -rf WEB-INF; mkdir WEB-INF
 cp server/example-web.xml WEB-INF/web.xml
 zip JavaBridgeTemplate.war index.php test.php
 zip JavaBridgeTemplate.war WEB-INF/web.xml
+zip -d JavaBridgeTemplate.war birtreportlib
 rm -f test.php
 
 cp  src.zip README FAQ.html PROTOCOL.TXT INSTALL.STANDALONE INSTALL.J2EE INSTALL.J2SE NEWS documentation
@@ -55,6 +56,6 @@ rm -rf $dirs
 cvs -Q update -APd 
 
 scp "php-java-bridge_`cat VERSION`_documentation.zip" "JavaBridgeTemplate`echo ${version}|sed 's/\.//g'`.war" jost_boekemeier,php-java-bridge@web.sf.net:"/home/pfs/project/p/ph/php-java-bridge/Binary\ package/php-java-bridge_`cat VERSION`/"
-scp dist/Java.inc dist/php-script.jar dist/JavaBridge.jar dist/script-api.jar jost_boekemeier,php-java-bridge@web.sf.net:"/home/pfs/project/p/ph/php-java-bridge/Binary\ package/php-java-bridge_`cat VERSION`/exploded/"
+scp dist/Java.inc dist/php-script.jar dist/JavaBridge.jar dist/php-servlet.jar dist/script-api.jar jost_boekemeier,php-java-bridge@web.sf.net:"/home/pfs/project/p/ph/php-java-bridge/Binary\ package/php-java-bridge_`cat VERSION`/exploded/"
 
 scp "php-java-bridge_`cat VERSION`.tar.gz" jost_boekemeier,php-java-bridge@web.sf.net:"/home/pfs/project/p/ph/php-java-bridge/RHEL_FC\ SecurityEnhancedLinux/php-java-bridge_`cat VERSION`/"
