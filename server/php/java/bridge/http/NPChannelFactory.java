@@ -88,10 +88,9 @@ public class NPChannelFactory extends FCGIConnectionFactory {
 	// The value itself doesn't matter, we'll pass the real value
 	// via the (HTTP_)X_JAVABRIDGE_OVERRIDE_HOSTS header field
 	// later.
-	String[] args = Util.getPhpArgs(new String[]{php, raPath}, includeJava, processFactory.getCgiDir(), processFactory.getPearDir(), processFactory.getWebInfDir());
 	File home = null;
 	if(php!=null) try { home = ((new File(php)).getParentFile()); } catch (Exception e) {Util.printStackTrace(e);}
-	proc = processFactory.createFCGIProcess(args, home, env);
+	proc = processFactory.createFCGIProcess(new String[]{php, raPath}, includeJava, home, env);
 	proc.start();
 	return (Process)proc;
     }

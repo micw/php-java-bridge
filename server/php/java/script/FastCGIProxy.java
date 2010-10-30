@@ -181,8 +181,8 @@ public class FastCGIProxy extends Continuation implements IFCGIProcessFactory {
     }
     /** required by IFCGIProcessFactory */
     /** {@inheritDoc} */
-    public IFCGIProcess createFCGIProcess(String[] args, File home, Map env) throws IOException {
-	return new FCGIProcess(args, home, env,
+    public IFCGIProcess createFCGIProcess(String[] args, boolean includeJava, File home, Map env) throws IOException {
+	return new FCGIProcess(args, includeJava, getCgiDir(), getPearDir(), getWebInfDir(), home, env,
 		getCgiDir(), true, true);
     }
 

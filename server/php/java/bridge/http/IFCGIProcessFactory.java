@@ -43,12 +43,16 @@ public interface IFCGIProcessFactory {
     /**
      * Create a FastCGI Process
      * @param args The PHP arguments
+     * @param webInfDir The web inf dir
+     * @param pearDir The bear dir
+     * @param cgiDir The cgi dir
+     * @param includeJava automatically include Java.inc in each script
      * @param home The PHP home dir or null
      * @param env The process environment
      * @return a FastCGI process object
      * @throws IOException
      */
-    public IFCGIProcess createFCGIProcess(String[] args, File home, Map env) throws IOException;
+    public IFCGIProcess createFCGIProcess(String[] args, boolean includeJava, File home, Map env) throws IOException;
 
     /**
      * Get the connection pool size, usually FCGIUtil#PHP_FCGI_CONNECTION_POOL_SIZE
@@ -103,5 +107,4 @@ public interface IFCGIProcessFactory {
      * @return the full path to the WEB-INF dir
      */
     public String getWebInfDir();
-    
 }

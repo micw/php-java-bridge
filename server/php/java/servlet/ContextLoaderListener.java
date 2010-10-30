@@ -569,9 +569,9 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
     protected boolean preferSystemPhp = false; // prefer /usr/bin/php-cgi over WEB-INF/cgi/php-cgi?
     protected boolean phpTryOtherLocations = false;
     /** {@inheritDoc} */
-    public IFCGIProcess createFCGIProcess(String[] args, File home, Map env)
+    public IFCGIProcess createFCGIProcess(String[] args, boolean includeJava, File home, Map env)
             throws IOException {
-	return new FCGIProcess(args, home, env, getCgiDir(), phpTryOtherLocations, preferSystemPhp);
+	return new FCGIProcess(args, includeJava, getCgiDir(), getPearDir(), getWebInfDir(), home, env, getCgiDir(), phpTryOtherLocations, preferSystemPhp);
     }
     /** {@inheritDoc} */
     public String getPhpConnectionPoolSize() {

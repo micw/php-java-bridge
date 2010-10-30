@@ -39,8 +39,8 @@ import php.java.bridge.http.IFCGIProcess;
  */
 public class FCGIProcess extends Util.Process implements IFCGIProcess {
     String realPath;
-    public FCGIProcess(String[] args, File homeDir, Map env, String realPath, boolean tryOtherLocations, boolean preferSystemPhp) throws IOException {
-	super(args, homeDir, env, tryOtherLocations, preferSystemPhp);
+    public FCGIProcess(String[] args, boolean includeJava, String cgiDir, String pearDir, String webInfDir, File homeDir, Map env, String realPath, boolean tryOtherLocations, boolean preferSystemPhp) throws IOException {
+	super(args, includeJava, cgiDir, pearDir, webInfDir, homeDir, env, tryOtherLocations, preferSystemPhp);
 	this.realPath = realPath;
     }
     protected String[] getArgumentArray(String[] php, String[] args) {
