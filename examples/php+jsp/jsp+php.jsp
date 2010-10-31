@@ -18,7 +18,7 @@ static {
   CompiledScript instance = (CompiledScript)((java.security.cert.CertStoreParameters)script).clone();
   try {
 	  // create a custom ScriptContext to connect the engine to the ContextLoaderListener's FastCGI runner 
-	  instance.getEngine().setContext(new PhpCompiledHttpScriptContext(instance.getEngine().getContext(),this,application,request,response));
+	  instance.getEngine().setContext(new PhpHttpScriptContext(instance.getEngine().getContext(),this,application,request,response));
 	
 	  // display hello world
 	  instance.getEngine().put("hello", "eval1: " + Thread.currentThread());
