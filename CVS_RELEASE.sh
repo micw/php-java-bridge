@@ -37,7 +37,7 @@ rm -rf WEB-INF; mkdir WEB-INF
 cp server/example-web.xml WEB-INF/web.xml
 zip JavaBridgeTemplate.war index.php test.php
 zip JavaBridgeTemplate.war WEB-INF/web.xml
-zip -d JavaBridgeTemplate.war birtreportlib
+zip -d JavaBridgeTemplate.war birtreportlib/
 rm -f test.php
 
 cp  src.zip README FAQ.html PROTOCOL.TXT INSTALL.STANDALONE INSTALL.J2EE INSTALL.J2SE NEWS documentation
